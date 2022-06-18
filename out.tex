@@ -1051,6 +1051,119 @@ ll query(int now, int L, int R, int i, int j, int val) {
 }
 
 \end{lstlisting}
+\subsection{Mo on Tree}
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 3e5 + 9;
+
+//unique elements on the path from u to v
+vector<int> g[N];
+int st[N], en[N], T, par[N][20], dep[N], id[N * 2];
+void dfs(int u, int p = 0) {
+  st[u] = ++T;
+  id[T] = u;
+  dep[u] = dep[p] + 1;
+  par[u][0] = p;
+  for(int k = 1; k < 20; k++) par[u][k] = par[par[u][k - 1]][k - 1];
+  for(auto v : g[u]) if(v != p) dfs(v, u);
+  en[u] = ++T;
+  id[T] = u;
+}
+int lca(int u, int v) {
+  if(dep[u] < dep[v]) swap(u, v);
+  for(int k = 19; k >= 0; k--) if(dep[par[u][k]] >= dep[v]) u = par[u][k];
+  if(u == v) return u;
+  for(int k = 19; k >= 0; k--) if(par[u][k] != par[v][k]) u = par[u][k], v = par[v][k];
+  return par[u][0];
+}
+
+int cnt[N], a[N], ans;
+inline void add(int u) {
+  int x = a[u];
+  if(cnt[x]++ == 0) ans++;
+}
+inline void rem(int u) {
+  int x = a[u];
+  if(--cnt[x] == 0) ans--;
+}
+bool vis[N];
+inline void yo(int u) {
+  if(!vis[u]) add(u);
+  else rem(u);
+  vis[u] ^= 1;
+}
+
+const int B = 320;
+struct query {
+  int l, r, id;
+  bool operator < (const query &x) const {
+    if(l / B == x.l / B) return r < x.r;
+    return l / B < x.l / B;
+  }
+} Q[N];
+
+int res[N];
+int main() {
+  ios_base::sync_with_stdio(0);
+  cin.tie(0);
+
+  int n, q;
+  while(cin >> n >> q) {
+    for(int i = 1; i <= n; i++) cin >> a[i];
+    map<int, int> mp;
+    for(int i = 1; i <= n; i++) {
+      if(mp.find(a[i]) == mp.end()) mp[a[i]], mp[a[i]] = mp.size();
+      a[i] = mp[a[i]];
+    }
+    for(int i = 1; i < n; i++) {
+      int u, v;
+      cin >> u >> v;
+      g[u].push_back(v);
+      g[v].push_back(u);
+    }
+    T = 0;
+    dfs(1);
+    for(int i = 1; i <= q; i++) {
+      int u, v ;
+      cin >> u >> v;
+      if(st[u] > st[v]) swap(u, v);
+      int lc = lca(u, v);
+      if(lc == u) Q[i].l = st[u], Q[i].r = st[v];
+      else Q[i].l = en[u], Q[i].r = st[v];
+      Q[i].id = i;
+    }
+    sort(Q + 1, Q + q + 1);
+    ans = 0;
+    int l = 1, r = 0;
+    for(int i = 1; i <= q; i++) {
+      int L = Q[i].l, R = Q[i].r;
+      if(R < l) {
+        while (l > L) yo(id[--l]);
+        while (l < L) yo(id[l++]);
+        while (r < R) yo(id[++r]);
+        while (r > R) yo(id[r--]);
+      } else {
+        while (r < R) yo(id[++r]);
+        while (r > R) yo(id[r--]);
+        while (l > L) yo(id[--l]);
+        while (l < L) yo(id[l++]);
+      }
+      int u = id[l], v = id[r], lc = lca(u, v);
+      if(lc != u && lc != v) yo(lc); //take care of the lca separately
+      res[Q[i].id] = ans;
+      if(lc != u && lc != v) yo(lc);
+    }
+    for(int i = 1; i <= q; i++) cout << res[i] << '\n';
+    for(int i = 0; i <= n; i++) {
+      g[i].clear();
+      vis[i] = cnt[i] = 0;
+      for(int k = 0; k < 20; k++) par[i][k] = 0;
+    }
+  }
+  return 0;
+}
+\end{lstlisting}
 \subsection{Mo's Algorithm}
 \begin{lstlisting}
 int vis[1000005];
@@ -1203,52 +1316,6 @@ class Sparse_Table
         return func(table[l][pow], Query(l+(1<<pow), r));
     }
 };\end{lstlisting}
-\subsection{SumOfDivisors}
-\begin{lstlisting}
-#include<bits/stdc++.h>
-using namespace std;
-#define hlw ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL)
-long long sod[10000007];
-bool pm[10000007];
-vector<long long>prm;
-int main()
-{
-    hlw;
-    long long i,j,n,t,d,p;
-    sod[1]=1;
-    prm.push_back(2);
-    for(i=3; i<10000007; i+=2)
-    {
-        if(!pm[i])
-        {
-            prm.push_back(i);
-            for(j=i*i; j<10000007; j+=2*i)
-            {
-                pm[j]=1;
-
-            }
-        }
-    }
-    for(i=1; i<=10000007;i++)
-        sod[i]=1;
-    for(i=0; i<prm.size(); i++)
-    {
-        p=prm[i];
-        for(j=p; j<10000007; j+=p)
-        {
-            d=p;
-            while(j%d==0)
-                d*=p;
-            d--;
-            d/=(p-1);
-            sod[j]*=d;
-        }
-    }
-
-
-    return 0;
-}
-\end{lstlisting}
 \subsection{Treap}
 \begin{lstlisting}
 mt19937 rnd(chrono::steady_clock::now().time_since_epoch().count());
@@ -1397,58 +1464,803 @@ void del(int n) {
 \section{Geometry}
 \subsection{2D Point}
 \begin{lstlisting}
-const double PI = acos(-1), EPS = 1e-10;
-template <typename DT> DT sq(DT x) {return x * x; }
-template <typename DT> int dcmp(DT x) { return fabs(x) < EPS ? 0 : (x<0 ? -1 : 1);}
+typedef double Tf;
+typedef Tf Ti;      /// use long long for exactness
+const Tf PI = acos(-1), EPS = 1e-9;
+int dcmp(Tf x) { return abs(x) < EPS ? 0 : (x<0 ? -1 : 1);}
 
-template <typename DT> 
-class point{
-    public:
-        DT x,y;
-    point() = default;
-    point(DT x, DT y): x(x), y(y) {};
-    template <typename X> point(point <X> p): x(p.x), y(p.y) {};
-    //opeartions on complex numbers
-    point operator * (point rhs) const { return point(x * rhs.x - y * rhs.y, x * rhs.y + y * rhs.x);}
-    point operator / (point rhs) const { return *this * point(rhs.x, - rhs.y) / ~(rhs);}
+struct Point {
+  Ti x, y;
+  Point(Ti x = 0, Ti y = 0) : x(x), y(y) {}
 
-    bool  operator < (point rhs) const { return x < rhs.x or (x == rhs.x and y < rhs.y); }
-    DT operator & (point rhs)     const { return x * rhs.y - y * rhs.x; }     // cross product
-    DT operator ^ (point rhs)     const { return x * rhs.x + y * rhs.y; }     // dot product
-    DT operator ~()     const {return sq(x) + sq(y); }                        //square of norm
-    friend istream& operator >> (istream &is, point &p) { return is >> p.x >> p.y; }
-    
-    friend DT DisSq(point a, point b){ return sq(a.x-b.x) + sq(a.y-b.y); }
-    friend DT TriArea(point a, point b, point c) { return (b-a) & (c-a); }
-    friend DT UTriArea(point a, point b, point c) { return abs(TriArea(a, b, c)); }
-    friend bool Collinear(point a, point b, point c) { return UTriArea(a, b, c) < EPS; }
-    friend double Angle(point u) { return atan2(u.y, u.x); }
-    friend double Angle(point a, point b) {
-        double ans = Angle(b) - Angle(a);
-        return ans <= -PI ? ans + 2*PI : (ans > PI ? ans - 2*PI : ans);
-    }
-    friend point Perp(point a){
-        return point(-a.y, a.x);
-    }
-    friend operator Orientation(point a, point b, point c) {return dcmp(TriArea(a, b, c));}
+  Point operator + (const Point& u) const { return Point(x + u.x, y + u.y); }
+  Point operator - (const Point& u) const { return Point(x - u.x, y - u.y); }
+  Point operator * (const long long u) const { return Point(x * u, y * u); }
+  Point operator * (const Tf u) const { return Point(x * u, y * u); }
+  Point operator / (const Tf u) const { return Point(x / u, y / u); }
+
+  bool operator == (const Point& u) const { return dcmp(x - u.x) == 0 && dcmp(y - u.y) == 0; }
+  bool operator != (const Point& u) const { return !(*this == u); }
+  bool operator < (const Point& u) const { return dcmp(x - u.x) < 0 || (dcmp(x - u.x) == 0 && dcmp(y - u.y) < 0); }
 };
-template <typename DT> using polygon = vector <point <DT>>; 
-template <typename DT> 
+
+Ti dot(Point a, Point b) { return a.x * b.x + a.y * b.y; }
+Ti cross(Point a, Point b) { return a.x * b.y - a.y * b.x; }
+Tf length(Point a) { return sqrt(dot(a, a)); }
+Ti sqLength(Point a) { return dot(a, a); }
+Tf distance(Point a, Point b) {return length(a-b);}
+Tf angle(Point u) { return atan2(u.y, u.x); }
+
+// returns angle between oa, ob in (-PI, PI]
+Tf angleBetween(Point a, Point b) {
+  double ans = angle(b) - angle(a);
+  return ans <= -PI ? ans + 2*PI : (ans > PI ? ans - 2*PI : ans);
+}
+
+// Rotate a ccw by rad radians
+Point rotate(Point a, Tf rad) {
+  static_assert(is_same<Tf, Ti>::value);
+  return Point(a.x * cos(rad) - a.y * sin(rad), a.x * sin(rad) + a.y * cos(rad));
+}
+
+// rotate a ccw by angle th with cos(th) = co && sin(th) = si
+Point rotatePrecise(Point a, Tf co, Tf si) {
+  static_assert(is_same<Tf, Ti>::value);
+  return Point(a.x * co - a.y * si, a.y * co + a.x * si);
+}
+
+Point rotate90(Point a) { return Point(-a.y, a.x); }
+
+// scales vector a by s such that length of a becomes s
+Point scale(Point a, Tf s) {
+  static_assert(is_same<Tf, Ti>::value);
+  return a / length(a) * s;
+}
+
+// returns an unit vector perpendicular to vector a
+Point normal(Point a) {
+  static_assert(is_same<Tf, Ti>::value);
+  Tf l = length(a);
+  return Point(-a.y / l, a.x / l);
+}
+
+// returns 1 if c is left of ab, 0 if on ab && -1 if right of ab
+int orient(Point a, Point b, Point c) {
+  return dcmp(cross(b - a, c - a));
+}
+
 class polarComp {
-    point <DT> O, dir;
-    bool half(point  <DT> p) {
+    point O, dir;
+    bool half(point p) {
         return dcmp(dir & p) < 0 || (dcmp(dir & p) == 0 && dcmp(dir ^ p) > 0);
     }
     public:
-    polarComp(point <DT> O = point(0, 0), point <DT> dir = point(1, 0))
+    polarComp(point O = point(0, 0), point dir = point(1, 0))
         : O(O), dir(dir) {}
   
-    bool operator() (point <DT> p, point <DT> q) {
+    bool operator() (point p, point q) {
         return make_tuple(half(p), 0) < make_tuple(half(q), (p & q));
     }
 }; // given a pivot point and an initial direction, sorts by Angle with the given direction
+
+struct Segment {
+  Point a, b;
+  Segment(Point aa, Point bb) : a(aa), b(bb) {}
+};
+typedef Segment Line;
+
+struct Circle {
+    Point o;
+    Tf r;
+    Circle(Point o = Point(0, 0), Tf r = 0) : o(o), r(r) {}
+
+    // returns true if point p is in || on the circle
+    bool contains(Point p) {
+      return dcmp(sqLength(p - o) - r * r) <= 0;
+    }
+
+    // returns a point on the circle rad radians away from +X CCW
+    Point point(Tf rad) {
+      static_assert(is_same<Tf, Ti>::value);
+      return Point(o.x + cos(rad) * r, o.y + sin(rad) * r);
+    }
+
+    // area of a circular sector with central angle rad
+    Tf area(Tf rad = PI + PI) { return rad * r * r / 2; }
+
+    // area of the circular sector cut by a chord with central angle alpha
+    Tf sector(Tf alpha) { return r * r * 0.5 * (alpha - sin(alpha)); }
+};
+
 \end{lstlisting}
-\subsection{3D Geo Templates}
+\subsection{Circle Algorithms}
+\begin{lstlisting}
+// Extremely inaccurate for finding near touches
+// compute intersection of line l with circle c
+// The intersections are given in order of the ray (l.a, l.b)
+vector<Point> circleLineIntersection(Circle c, Line l) {
+    static_assert(is_same<Tf, Ti>::value);
+    vector<Point> ret;
+    Point b = l.b - l.a, a = l.a - c.o;
+
+    Tf A = dot(b, b), B = dot(a, b);
+    Tf C = dot(a, a) - c.r * c.r, D = B * B - A * C;
+    if (D < -EPS) return ret;
+
+    ret.push_back(l.a + b * (-B - sqrt(D + EPS)) / A);
+    if (D > EPS) ret.push_back(l.a + b * (-B + sqrt(D)) / A);
+    return ret;
+}
+
+// signed area of intersection of circle(c.o, c.r) &&
+// triangle(c.o, s.a, s.b) [cross(a-o, b-o)/2]
+Tf circleTriangleIntersectionArea(Circle c, Segment s) {
+    Tf OA = length(c.o - s.a);
+    Tf OB = length(c.o - s.b);
+
+    // sector
+    if (dcmp(distancePointSegment(c.o, s) - c.r) >= 0)
+        return angleBetween(s.a - c.o, s.b - c.o) * (c.r * c.r) / 2.0;
+
+    // triangle
+    if (dcmp(OA - c.r) <= 0 && dcmp(OB - c.r) <= 0)
+        return cross(c.o - s.b, s.a - s.b) / 2.0;
+
+    // three part: (A, a) (a, b) (b, B)
+    vector<Point> Sect = circleLineIntersection(c, s);
+    return circleTriangleIntersectionArea(c, Segment(s.a, Sect[0])) +
+           circleTriangleIntersectionArea(c, Segment(Sect[0], Sect[1])) +
+           circleTriangleIntersectionArea(c, Segment(Sect[1], s.b));
+}
+
+// area of intersecion of circle(c.o, c.r) && simple polyson(p[])
+// Tested : https://codeforces.com/gym/100204/problem/F - Little Mammoth
+Tf circlePolyIntersectionArea(Circle c, Polygon p) {
+    Tf res = 0;
+    int n = p.size();
+    for (int i = 0; i < n; ++i)
+        res += circleTriangleIntersectionArea(c, Segment(p[i], p[(i + 1) % n]));
+    return abs(res);
+}
+
+// locates circle c2 relative to c1
+// interior       (d < R - r)     ----> -2
+// interior tangents (d = R - r)     ----> -1
+// concentric    (d = 0)
+// secants       (R - r < d < R + r) ---->  0
+// exterior tangents (d = R + r)     ---->  1
+// exterior       (d > R + r)     ---->  2
+int circleCirclePosition(Circle c1, Circle c2) {
+    Tf d = length(c1.o - c2.o);
+    int in = dcmp(d - abs(c1.r - c2.r)), ex = dcmp(d - (c1.r + c2.r));
+    return in < 0 ? -2 : in == 0 ? -1 : ex == 0 ? 1 : ex > 0 ? 2 : 0;
+}
+
+// compute the intersection points between two circles c1 && c2
+vector<Point> circleCircleIntersection(Circle c1, Circle c2) {
+    static_assert(is_same<Tf, Ti>::value);
+    vector<Point> ret;
+    Tf d = length(c1.o - c2.o);
+    if (dcmp(d) == 0) return ret;
+    if (dcmp(c1.r + c2.r - d) < 0) return ret;
+    if (dcmp(abs(c1.r - c2.r) - d) > 0) return ret;
+
+    Point v = c2.o - c1.o;
+    Tf co = (c1.r * c1.r + sqLength(v) - c2.r * c2.r) / (2 * c1.r * length(v));
+    Tf si = sqrt(abs(1.0 - co * co));
+    Point p1 = scale(rotatePrecise(v, co, -si), c1.r) + c1.o;
+    Point p2 = scale(rotatePrecise(v, co, si), c1.r) + c1.o;
+
+    ret.push_back(p1);
+    if (p1 != p2) ret.push_back(p2);
+    return ret;
+}
+
+// intersection area between two circles c1, c2
+Tf circleCircleIntersectionArea(Circle c1, Circle c2) {
+    Point AB = c2.o - c1.o;
+    Tf d = length(AB);
+    if (d >= c1.r + c2.r) return 0;
+    if (d + c1.r <= c2.r) return PI * c1.r * c1.r;
+    if (d + c2.r <= c1.r) return PI * c2.r * c2.r;
+
+    Tf alpha1 = acos((c1.r * c1.r + d * d - c2.r * c2.r) / (2.0 * c1.r * d));
+    Tf alpha2 = acos((c2.r * c2.r + d * d - c1.r * c1.r) / (2.0 * c2.r * d));
+    return c1.sector(2 * alpha1) + c2.sector(2 * alpha2);
+}
+
+// returns tangents from a point p to circle c
+vector<Point> pointCircleTangents(Point p, Circle c) {
+    static_assert(is_same<Tf, Ti>::value);
+
+    vector<Point> ret;
+    Point u = c.o - p;
+    Tf d = length(u);
+    if (d < c.r)
+        ;
+    else if (dcmp(d - c.r) == 0) {
+        ret = {rotate(u, PI / 2)};
+    } else {
+        Tf ang = asin(c.r / d);
+        ret = {rotate(u, -ang), rotate(u, ang)};
+    }
+    return ret;
+}
+
+// returns the points on tangents that touches the circle
+vector<Point> pointCircleTangencyPoints(Point p, Circle c) {
+    static_assert(is_same<Tf, Ti>::value);
+
+    Point u = p - c.o;
+    Tf d = length(u);
+    if (d < c.r)
+        return {};
+    else if (dcmp(d - c.r) == 0)
+        return {c.o + u};
+    else {
+        Tf ang = acos(c.r / d);
+        u = u / length(u) * c.r;
+        return {c.o + rotate(u, -ang), c.o + rotate(u, ang)};
+    }
+}
+
+// for two circles c1 && c2, returns two list of points a && b
+// such that a[i] is on c1 && b[i] is c2 && for every i
+// Line(a[i], b[i]) is a tangent to both circles
+// CAUTION: a[i] = b[i] in case they touch | -1 for c1 = c2
+int circleCircleTangencyPoints(Circle c1, Circle c2, vector<Point> &a,
+                               vector<Point> &b) {
+    a.clear(), b.clear();
+    int cnt = 0;
+    if (dcmp(c1.r - c2.r) < 0) {
+        swap(c1, c2);
+        swap(a, b);
+    }
+    Tf d2 = sqLength(c1.o - c2.o);
+    Tf rdif = c1.r - c2.r, rsum = c1.r + c2.r;
+    if (dcmp(d2 - rdif * rdif) < 0) return 0;
+    if (dcmp(d2) == 0 && dcmp(c1.r - c2.r) == 0) return -1;
+
+    Tf base = angle(c2.o - c1.o);
+    if (dcmp(d2 - rdif * rdif) == 0) {
+        a.push_back(c1.point(base));
+        b.push_back(c2.point(base));
+        cnt++;
+        return cnt;
+    }
+
+    Tf ang = acos((c1.r - c2.r) / sqrt(d2));
+    a.push_back(c1.point(base + ang));
+    b.push_back(c2.point(base + ang));
+    cnt++;
+    a.push_back(c1.point(base - ang));
+    b.push_back(c2.point(base - ang));
+    cnt++;
+
+    if (dcmp(d2 - rsum * rsum) == 0) {
+        a.push_back(c1.point(base));
+        b.push_back(c2.point(PI + base));
+        cnt++;
+    } else if (dcmp(d2 - rsum * rsum) > 0) {
+        Tf ang = acos((c1.r + c2.r) / sqrt(d2));
+        a.push_back(c1.point(base + ang));
+        b.push_back(c2.point(PI + base + ang));
+        cnt++;
+        a.push_back(c1.point(base - ang));
+        b.push_back(c2.point(PI + base - ang));
+        cnt++;
+    }
+    return cnt;
+}
+\end{lstlisting}
+\subsection{Closest Pair of Points}
+\begin{lstlisting}
+LL ClosestPair(vector<pii> pts) {
+    int n = pts.size();
+    sort(all(pts));
+    set<pii> s;
+
+    LL best_dist = 1e18;
+    int j = 0;
+    for (int i = 0; i < n; ++i) {
+        int d = ceil(sqrt(best_dist));
+        while (pts[i].ff - pts[j].ff >= best_dist) {
+            s.erase({pts[j].ss, pts[j].ff});
+            j += 1;
+        }
+
+        auto it1 = s.lower_bound({pts[i].ss - d, pts[i].ff});
+        auto it2 = s.upper_bound({pts[i].ss + d, pts[i].ff});
+
+        for (auto it = it1; it != it2; ++it) {
+            int dx = pts[i].ff - it->ss;
+            int dy = pts[i].ss - it->ff;
+            best_dist = min(best_dist, 1LL * dx * dx + 1LL * dy * dy);
+        }
+        s.insert({pts[i].ss, pts[i].ff});
+    }
+    return best_dist;
+}
+\end{lstlisting}
+\subsection{Linear}
+\begin{lstlisting}
+// returns true if point p is on segment s
+bool onSegment(Point p, Segment s) {
+    return dcmp(cross(s.a - p, s.b - p)) == 0 &&
+           dcmp(dot(s.a - p, s.b - p)) <= 0;
+}
+
+// returns true if segment p && q touch or intersect
+bool segmentsIntersect(Segment p, Segment q) {
+    if (onSegment(p.a, q) || onSegment(p.b, q)) return true;
+    if (onSegment(q.a, p) || onSegment(q.b, p)) return true;
+
+    Ti c1 = cross(p.b - p.a, q.a - p.a);
+    Ti c2 = cross(p.b - p.a, q.b - p.a);
+    Ti c3 = cross(q.b - q.a, p.a - q.a);
+    Ti c4 = cross(q.b - q.a, p.b - q.a);
+    return dcmp(c1) * dcmp(c2) < 0 && dcmp(c3) * dcmp(c4) < 0;
+}
+
+bool linesParallel(Line p, Line q) {
+    return dcmp(cross(p.b - p.a, q.b - q.a)) == 0;
+}
+
+// lines are represented as a ray from a point: (point, vector)
+// returns false if two lines (p, v) && (q, w) are parallel or collinear
+// true otherwise, intersection point is stored at o via reference
+bool lineLineIntersection(Point p, Point v, Point q, Point w, Point& o) {
+    static_assert(is_same<Tf, Ti>::value);
+    if (dcmp(cross(v, w)) == 0) return false;
+    Point u = p - q;
+    o = p + v * (cross(w, u) / cross(v, w));
+    return true;
+}
+
+// returns false if two lines p && q are parallel or collinear
+// true otherwise, intersection point is stored at o via reference
+bool lineLineIntersection(Line p, Line q, Point& o) {
+    return lineLineIntersection(p.a, p.b - p.a, q.a, q.b - q.a, o);
+}
+
+// returns the distance from point a to line l
+Tf distancePointLine(Point p, Line l) {
+    return abs(cross(l.b - l.a, p - l.a) / length(l.b - l.a));
+}
+
+// returns the shortest distance from point a to segment s
+Tf distancePointSegment(Point p, Segment s) {
+    if (s.a == s.b) return length(p - s.a);
+    Point v1 = s.b - s.a, v2 = p - s.a, v3 = p - s.b;
+    if (dcmp(dot(v1, v2)) < 0)
+        return length(v2);
+    else if (dcmp(dot(v1, v3)) > 0)
+        return length(v3);
+    else
+        return abs(cross(v1, v2) / length(v1));
+}
+
+// returns the shortest distance from segment p to segment q
+Tf distanceSegmentSegment(Segment p, Segment q) {
+    if (segmentsIntersect(p, q)) return 0;
+    Tf ans = distancePointSegment(p.a, q);
+    ans = min(ans, distancePointSegment(p.b, q));
+    ans = min(ans, distancePointSegment(q.a, p));
+    ans = min(ans, distancePointSegment(q.b, p));
+    return ans;
+}
+
+// returns the projection of point p on line l
+Point projectPointLine(Point p, Line l) {
+    static_assert(is_same<Tf, Ti>::value);
+    Point v = l.b - l.a;
+    return l.a + v * ((Tf)dot(v, p - l.a) / dot(v, v));
+}
+\end{lstlisting}
+\subsection{Pair of Intersecting segments using Line Sweep}
+\begin{lstlisting}
+/*
+Checking for the intersection of two segments is carried out by the intersect ()
+function, using an algorithm based on the oriented area of the triangle.
+
+The queue of segments is the global variable s, a set<event>. Iterators that
+specify the position of each segment in the queue (for convenient removal of
+segments from the queue) are stored in the global array where.
+
+Two auxiliary functions prev() and next() are also introduced, which return
+iterators to the previous and next elements (or end(), if one does not exist).
+*/
+Tf yvalSegment(const Line &s, Tf x) {
+    if (dcmp(s.a.x - s.b.x) == 0) return s.a.y;
+    return s.a.y + (s.b.y - s.a.y) * (x - s.a.x) / (s.b.x - s.a.x);
+}
+
+struct SegCompare {
+    bool operator()(const Segment &p, const Segment &q) const {
+        Tf x = max(min(p.a.x, p.b.x), min(q.a.x, q.b.x));
+        return dcmp(yvalSegment(p, x) - yvalSegment(q, x)) < 0;
+    }
+};
+
+multiset<Segment, SegCompare> st;
+typedef multiset<Segment, SegCompare>::iterator iter;
+
+iter prev(iter it) { return it == st.begin() ? st.end() : --it; }
+
+iter next(iter it) { return it == st.end() ? st.end() : ++it; }
+
+struct Event {
+    Tf x;
+    int tp, id;
+    Event(Ti x, int tp, int id) : x(x), tp(tp), id(id) {}
+    bool operator<(const Event &p) const {
+        if (dcmp(x - p.x)) return x < p.x;
+        return tp > p.tp;
+    }
+};
+
+bool anyIntersection(const vector<Segment> &v) {
+    using Linear::segmentsIntersect;
+    vector<Event> ev;
+    for (int i = 0; i < (int)v.size(); ++i) {
+        ev.push_back(Event(min(v[i].a.x, v[i].b.x), +1, i));
+        ev.push_back(Event(max(v[i].a.x, v[i].b.x), -1, i));
+    }
+    sort(ev.begin(), ev.end());
+
+    st.clear();
+    vector<iter> where(v.size());
+    for (auto &cur : ev) {
+        int id = cur.id;
+        if (cur.tp == 1) {
+            iter nxt = st.lower_bound(v[id]);
+            iter pre = prev(nxt);
+            if (pre != st.end() && segmentsIntersect(*pre, v[id])) return true;
+            if (nxt != st.end() && segmentsIntersect(*nxt, v[id])) return true;
+            where[id] = st.insert(nxt, v[id]);
+        } else {
+            iter nxt = next(where[id]);
+            iter pre = prev(where[id]);
+            if (pre != st.end() && nxt != st.end() &&
+                segmentsIntersect(*pre, *nxt))
+                return true;
+            st.erase(where[id]);
+        }
+    }
+    return false;
+}
+\end{lstlisting}
+\subsection{Polygons}
+\begin{lstlisting}
+// returns the signed area of polygon p of n vertices
+using Polygon = vector<Point>;
+Tf signedPolygonArea(Polygon p) {
+    Tf ret = 0;
+    for (int i = 0; i < (int)p.size() - 1; i++)
+        ret += cross(p[i] - p[0], p[i + 1] - p[0]);
+    return ret / 2;
+}
+// given a polygon p of n vertices, generates the convex hull in ch
+// in CCW && returns the number of vertices in the convex hull
+int convexHull(Polygon p, Polygon &ch) {
+    sort(p.begin(), p.end());
+    int n = p.size();
+    ch.resize(n + n);
+    int m = 0;  // preparing lower hull
+    for (int i = 0; i < n; i++) {
+        while (m > 1 &&
+               dcmp(cross(ch[m - 1] - ch[m - 2], p[i] - ch[m - 1])) <= 0)
+            m--;
+        ch[m++] = p[i];
+    }
+    int k = m;  // preparing upper hull
+    for (int i = n - 2; i >= 0; i--) {
+        while (m > k &&
+               dcmp(cross(ch[m - 1] - ch[m - 2], p[i] - ch[m - 2])) <= 0)
+            m--;
+        ch[m++] = p[i];
+    }
+    if (n > 1) m--;
+    ch.resize(m);
+    return m;
+}
+
+// for a point o and polygon p returns:
+//   -1 if o is strictly inside p
+//  0 if o is on a segment of p
+//  1 if o is strictly outside p
+// computes via winding numbers
+int pointInPolygon(Point o, Polygon p) {
+    int wn = 0, n = p.size();
+    for (int i = 0; i < n; i++) {
+        int j = (i + 1) % n;
+        if (onSegment(o, Segment(p[i], p[j])) || o == p[i]) return 0;
+        int k = dcmp(cross(p[j] - p[i], o - p[i]));
+        int d1 = dcmp(p[i].y - o.y);
+        int d2 = dcmp(p[j].y - o.y);
+        if (k > 0 && d1 <= 0 && d2 > 0) wn++;
+        if (k < 0 && d2 <= 0 && d1 > 0) wn--;
+    }
+    return wn ? -1 : 1;
+}
+
+// returns the longest line segment of l that is inside or on the
+// simply polygon p. O(n lg n). TESTED: TIMUS 1955
+Tf longestSegInPoly(Line l, const Polygon &p) {
+    int n = p.size();
+    vector<pair<Tf, int>> ev;
+    for (int i = 0; i < n; ++i) {
+        Point a = p[i], b = p[(i + 1) % n], z = p[(i - 1 + n) % n];
+        int ora = orient(l.a, l.b, a), orb = orient(l.a, l.b, b),
+            orz = orient(l.a, l.b, z);
+        if (!ora) {
+            Tf d = dot(a - l.a, l.b - l.a);
+            if (orz && orb) {
+                if (orz != orb) ev.emplace_back(d, 0);
+            } else if (orz)
+                ev.emplace_back(d, orz);
+            else if (orb)
+                ev.emplace_back(d, orb);
+        } else if (ora == -orb) {
+            Point ins;
+            lineLineIntersection(l, Line(a, b), ins);
+            ev.emplace_back(dot(ins - l.a, l.b - l.a), 0);
+        }
+    }
+    sort(ev.begin(), ev.end());
+
+    Tf ret = 0, cur = 0, pre = 0;
+    bool active = false;
+    int sign = 0;
+    for (auto &qq : ev) {
+        int tp = qq.second;
+        Tf d = qq.first;
+        if (sign) {
+            cur += d - pre;
+            ret = max(ret, cur);
+            if (tp != sign) active = !active;
+            sign = 0;
+        } else {
+            if (active) cur += d - pre, ret = max(ret, cur);
+            if (tp == 0)
+                active = !active;
+            else
+                sign = tp;
+        }
+        pre = d;
+        if (!active) cur = 0;
+    }
+
+    ret /= length(l.b - l.a);
+    return ret;
+}
+
+// EVERYTHING AFTER THIS ONLY FOR CONVEX POLYGON
+/// Tested on Kattis::fenceortho
+void rotatingCalipersGetRectangle(Point *p, int n, Tf &area, Tf &perimeter) {
+    static_assert(is_same<Tf, Ti>::value);
+    p[n] = p[0];
+    int l = 1, r = 1, j = 1;
+    area = perimeter = 1e100;
+
+    for (int i = 0; i < n; i++) {
+        Point v = (p[i + 1] - p[i]) / length(p[i + 1] - p[i]);
+        while (dcmp(dot(v, p[r % n] - p[i]) - dot(v, p[(r + 1) % n] - p[i])) <
+               0)
+            r++;
+        while (j < r || dcmp(cross(v, p[j % n] - p[i]) -
+                             cross(v, p[(j + 1) % n] - p[i])) < 0)
+            j++;
+        while (l < j || dcmp(dot(v, p[l % n] - p[i]) -
+                             dot(v, p[(l + 1) % n] - p[i])) > 0)
+            l++;
+        Tf w = dot(v, p[r % n] - p[i]) - dot(v, p[l % n] - p[i]);
+        Tf h = distancePointLine(p[j % n], Line(p[i], p[i + 1]));
+        area = min(area, w * h);
+        perimeter = min(perimeter, 2 * w + 2 * h);
+    }
+}
+
+// returns the left side of polygon u after cutting it by ray a->b
+Polygon cutPolygon(Polygon u, Point a, Point b) {
+    Polygon ret;
+    int n = u.size();
+    for (int i = 0; i < n; i++) {
+        Point c = u[i], d = u[(i + 1) % n];
+        if (dcmp(cross(b - a, c - a)) >= 0) ret.push_back(c);
+        if (dcmp(cross(b - a, d - c)) != 0) {
+            Point t;
+            lineLineIntersection(a, b - a, c, d - c, t);
+            if (onSegment(t, Segment(c, d))) ret.push_back(t);
+        }
+    }
+    return ret;
+}
+
+// returns true if point p is in or on triangle abc
+bool pointInTriangle(Point a, Point b, Point c, Point p) {
+    return dcmp(cross(b - a, p - a)) >= 0 && dcmp(cross(c - b, p - b)) >= 0 &&
+           dcmp(cross(a - c, p - c)) >= 0;
+}
+
+// Tested : https://www.spoj.com/problems/INOROUT
+// pt must be in ccw order with no three collinear points
+// returns inside = -1, on = 0, outside = 1
+int pointInConvexPolygon(const Polygon &pt, Point p) {
+    int n = pt.size();
+    assert(n >= 3);
+
+    int lo = 1, hi = n - 1;
+    while (hi - lo > 1) {
+        int mid = (lo + hi) / 2;
+        if (dcmp(cross(pt[mid] - pt[0], p - pt[0])) > 0)
+            lo = mid;
+        else
+            hi = mid;
+    }
+
+    bool in = pointInTriangle(pt[0], pt[lo], pt[hi], p);
+    if (!in) return 1;
+
+    if (dcmp(cross(pt[lo] - pt[lo - 1], p - pt[lo - 1])) == 0) return 0;
+    if (dcmp(cross(pt[hi] - pt[lo], p - pt[lo])) == 0) return 0;
+    if (dcmp(cross(pt[hi] - pt[(hi + 1) % n], p - pt[(hi + 1) % n])) == 0)
+        return 0;
+    return -1;
+}
+
+// Extreme Point for a direction is the farthest point in that direction
+// O'Rourke, page 270, http://crtl-i.com/PDF/comp_c.pdf
+// also https://codeforces.com/blog/entry/48868
+// poly is a convex polygon, sorted in CCW, doesn't contain redundant points
+// u is the direction for extremeness
+int extremePoint(const Polygon &poly, Point u = Point(0, 1)) {
+    int n = (int)poly.size();
+    int a = 0, b = n;
+    while (b - a > 1) {
+        int c = (a + b) / 2;
+        if (dcmp(dot(poly[c] - poly[(c + 1) % n], u)) >= 0 &&
+            dcmp(dot(poly[c] - poly[(c - 1 + n) % n], u)) >= 0) {
+            return c;
+        }
+
+        bool a_up = dcmp(dot(poly[(a + 1) % n] - poly[a], u)) >= 0;
+        bool c_up = dcmp(dot(poly[(c + 1) % n] - poly[c], u)) >= 0;
+        bool a_above_c = dcmp(dot(poly[a] - poly[c], u)) > 0;
+
+        if (a_up && !c_up)
+            b = c;
+        else if (!a_up && c_up)
+            a = c;
+        else if (a_up && c_up) {
+            if (a_above_c)
+                b = c;
+            else
+                a = c;
+        } else {
+            if (!a_above_c)
+                b = c;
+            else
+                a = c;
+        }
+    }
+
+    if (dcmp(dot(poly[a] - poly[(a + 1) % n], u)) > 0 &&
+        dcmp(dot(poly[a] - poly[(a - 1 + n) % n], u)) > 0)
+        return a;
+    return b % n;
+}
+
+// For a convex polygon p and a line l, returns a list of segments
+// of p that are touch or intersect line l.
+// the i'th segment is considered (p[i], p[(i + 1) modulo |p|])
+// #1 If a segment is collinear with the line, only that is returned
+// #2 Else if l goes through i'th point, the i'th segment is added
+// If there are 2 or more such collinear segments for #1,
+// any of them (only one, not all) should be returned (not tested)
+// Complexity: O(lg |p|)
+vector<int> lineConvexPolyIntersection(const Polygon &p, Line l) {
+    assert((int)p.size() >= 3);
+    assert(l.a != l.b);
+
+    int n = p.size();
+    vector<int> ret;
+
+    Point v = l.b - l.a;
+    int lf = extremePoint(p, rotate90(v));
+    int rt = extremePoint(p, rotate90(v) * Ti(-1));
+    int olf = orient(l.a, l.b, p[lf]);
+    int ort = orient(l.a, l.b, p[rt]);
+
+    if (!olf || !ort) {
+        int idx = (!olf ? lf : rt);
+        if (orient(l.a, l.b, p[(idx - 1 + n) % n]) == 0)
+            ret.push_back((idx - 1 + n) % n);
+        else
+            ret.push_back(idx);
+        return ret;
+    }
+    if (olf == ort) return ret;
+
+    for (int i = 0; i < 2; ++i) {
+        int lo = i ? rt : lf;
+        int hi = i ? lf : rt;
+        int olo = i ? ort : olf;
+
+        while (true) {
+            int gap = (hi - lo + n) % n;
+            if (gap < 2) break;
+
+            int mid = (lo + gap / 2) % n;
+            int omid = orient(l.a, l.b, p[mid]);
+            if (!omid) {
+                lo = mid;
+                break;
+            }
+            if (omid == olo)
+                lo = mid;
+            else
+                hi = mid;
+        }
+        ret.push_back(lo);
+    }
+    return ret;
+}
+
+// Tested : https://toph.co/p/cover-the-points
+// Calculate [ACW, CW] tangent pair from an external point
+constexpr int CW = -1, ACW = 1;
+bool isGood(Point u, Point v, Point Q, int dir) {
+    return orient(Q, u, v) != -dir;
+}
+Point better(Point u, Point v, Point Q, int dir) {
+    return orient(Q, u, v) == dir ? u : v;
+}
+Point pointPolyTangent(const Polygon &pt, Point Q, int dir, int lo, int hi) {
+    while (hi - lo > 1) {
+        int mid = (lo + hi) / 2;
+        bool pvs = isGood(pt[mid], pt[mid - 1], Q, dir);
+        bool nxt = isGood(pt[mid], pt[mid + 1], Q, dir);
+
+        if (pvs && nxt) return pt[mid];
+        if (!(pvs || nxt)) {
+            Point p1 = pointPolyTangent(pt, Q, dir, mid + 1, hi);
+            Point p2 = pointPolyTangent(pt, Q, dir, lo, mid - 1);
+            return better(p1, p2, Q, dir);
+        }
+
+        if (!pvs) {
+            if (orient(Q, pt[mid], pt[lo]) == dir)
+                hi = mid - 1;
+            else if (better(pt[lo], pt[hi], Q, dir) == pt[lo])
+                hi = mid - 1;
+            else
+                lo = mid + 1;
+        }
+        if (!nxt) {
+            if (orient(Q, pt[mid], pt[lo]) == dir)
+                lo = mid + 1;
+            else if (better(pt[lo], pt[hi], Q, dir) == pt[lo])
+                hi = mid - 1;
+            else
+                lo = mid + 1;
+        }
+    }
+
+    Point ret = pt[lo];
+    for (int i = lo + 1; i <= hi; i++) ret = better(ret, pt[i], Q, dir);
+    return ret;
+}
+// [ACW, CW] Tangent
+pair<Point, Point> pointPolyTangents(const Polygon &pt, Point Q) {
+    int n = pt.size();
+    Point acw_tan = pointPolyTangent(pt, Q, ACW, 0, n - 1);
+    Point cw_tan = pointPolyTangent(pt, Q, CW, 0, n - 1);
+    return make_pair(acw_tan, cw_tan);
+}
+
+\end{lstlisting}
+\subsection{Three Dimensional}
 \begin{lstlisting}
 
 point get_perp(point p){ // returns a random perpendicular line to the vector p
@@ -1725,447 +2537,114 @@ int main()
 }
 
 \end{lstlisting}
-\subsection{Closest Pair of Points}
-\begin{lstlisting}
-LL ClosestPair(vector<pii> pts) {
-    int n = pts.size();
-    sort(all(pts));
-    set<pii> s;
-
-    LL best_dist = 1e18;
-    int j = 0;
-    for (int i = 0; i < n; ++i) {
-        int d = ceil(sqrt(best_dist));
-        while (pts[i].ff - pts[j].ff >= best_dist) {
-            s.erase({pts[j].ss, pts[j].ff});
-            j += 1;
-        }
-
-        auto it1 = s.lower_bound({pts[i].ss - d, pts[i].ff});
-        auto it2 = s.upper_bound({pts[i].ss + d, pts[i].ff});
-
-        for (auto it = it1; it != it2; ++it) {
-            int dx = pts[i].ff - it->ss;
-            int dy = pts[i].ss - it->ff;
-            best_dist = min(best_dist, 1LL * dx * dx + 1LL * dy * dy);
-        }
-        s.insert({pts[i].ss, pts[i].ff});
-    }
-    return best_dist;
-}
-\end{lstlisting}
-\subsection{Line and Circles}
-\begin{lstlisting}
-template <typename DT>
-class line{
-    public:
-        point <DT> dir, O; // direction of vector and starting point
-    line(point <DT> p,point <DT> q): dir(q - p), O(p) {};
-
-    bool Contains(const point <double> &p){ 
-        return fabs(p - O & dir ) < EPS;
-    } // checks whether the line Contains a certain point
-    template <typename XT> point <XT> At(XT t){
-        return point <XT> (dir) * t + O;
-    } // inserts value of t in the vector representation, finds the point which is O + Dir*t
-    double AtInv(const point <double> &p){
-        return abs(dir.x) > 0 ? (p - O).x / dir.x : (p - O).y / dir.y;
-    } // if the line Contains a point, gives the value t such that, p = O+Dir*t
-    line Perp(point <DT> p){
-        return line(p, p + (-dir.y,dir.x));
-    }
-    point <DT> ProjOfPoint(const point <DT> &P) {
-        return O + dir * ((P - O) ^ dir) / (~dir);
-    }
-    double DisOfPoint(const point <DT> &P) {
-        return fabs(dir & (P - O))/sqrt(~(dir));   
-    }
-    friend bool Parallel(line& L, line& R){
-        return fabs(R.dir & L.dir) < EPS;
-    }
-    friend int Intersects(line& L, line& R){
-        return Parallel(L, R) ? R.Contains(L.O) ? -1 : 0 : 1;
-    }
-    friend pair <double, double> IntersectionAt(line &L, line &R){
-        double r = double((L.O - R.O) & L.dir)/(R.dir & L.dir);
-        double l = double((R.O - L.O) & R.dir)/(L.dir & R.dir);
-        return {l, r};
-    }
-    friend pair <int, point<double>> IntersectionPoint(line L, line R,int _L = 0, int _R = 0){
-        // _L and _R can be 0 to 3, 0 is a normal line, 3 is a segment, 1 and 2 are rays (considered bitwise)
-        int ok = Intersects(L, R);
-        if(ok == 0)
-            return {0, {0, 0}};
-        if(ok == 1){
-            auto [l,r] = IntersectionAt(L, R);
-            if(l < (0-EPS) and _L & 2 )
-                return {0, {0, 0}};
-            if(l > (1+EPS) and _L & 1)
-                return {0, {0, 0}};
-            if(r < (0-EPS) and _R & 2 )
-                return {0, {0, 0}};
-            if(r > (1+EPS) and _R & 1)
-                return {0, {0, 0}};
-            return {1, L.At(l)};
-        }
-        return {-1, {0,0}}; // they are the same line
-    }
-};
-template <typename DT> 
-class circle {
-    public:
-        point <DT> O;
-        DT R;
-    circle(const point <DT> &O = {0, 0},  DT R = 0) : O(O), R(R) {}
-    // the next two make sense only on circle <double>
-    circle(const point <DT> &A, const point <DT> &B, const point <DT> &C){
-        point <DT> X = (A + B) / 2, Y = (B + C) / 2, d1 = Perp(A - B), d2 = Perp(B - C);
-        O = IntersectionPoint(line(X, d1), line(Y, d2)).second;
-        R = sqrt(~(O - A));
-    }
-    circle(const point <DT> &A, const point <DT> &B, DT R){
-        point <DT> X = (A + B) / 2, d = Perp(A - B);
-        d = d * (R / sqrt(~(d)));
-        O = X + d;
-        R = sqrt(~(O - A));
-    }
-    double SectorArea(double ang) {
-        // Area of a sector of cicle
-        return ang* R * R * .5;
-    }
-    double SectorArea(const point <DT> &a, const point <DT> &b) {
-        return SectorArea(Angle(a - O, b - O));
-    }
-    double ChordArea(const point <DT> &a, const point <DT> &b) {
-        // Area between sector and its chord
-        return SectorArea(a, b) - 0.5 * TriArea(O, a, b);
-    }
-    int Contains(const point <DT> &p){
-        // 0 for outside, 1 for inside, -1 for on the circle
-        DT d = DisSq(O, p);
-        return d > R * R ? 0 : (d == R * R ? -1 : 1);
-    }
-    friend tuple <int, point <DT>, point <DT>> IntersectionPoint(const circle &a,const circle &b) {
-        if(a.R == b.R and a.O == b.O)
-            return {-1, {0, 0}, {0, 0}};
-        double d = sqrt(DisSq(a.O, b.O));
-        if(d > a.R + b.R or d < fabs(a.R - b.R))
-            return {0, {0, 0}, {0, 0}};
-        double z = (sq(a.R) + sq(d) - sq(b.R)) / (2 * d);
-        double y = sqrt(sq(a.R) - sq(z));
-        point <DT> O = b.O - a.O, h = Perp(O) * (y / sqrt(~O));
-        O = a.O + O * (z / sqrt(~O));
-        return make_tuple(1 + (~(h) > EPS), O - h, O + h);
-    }
-    friend tuple <int, point <DT>, point <DT>> IntersectionPoint(const circle &C, line <DT> L) {
-        point <DT> P = L.ProjOfPoint(C.O);
-        double D = DisSq(C.O, P);
-        if(D > C.R * C.R)
-            return {0, {0, 0}, {0, 0}};
-        double x = sqrt(C.R * C.R - D); 
-        point <DT> h = L.dir * (x / sqrt(~L.dir));
-        return {1 + (x > EPS), P - h, P + h};
-    } 
-    double SegmentedArea(point <DT> &a,  point <DT> &b) {
-        // signed area of the intersection between the circle and triangle OAB
-        double ans = SectorArea(a, b);
-        line <DT> L(a, b);
-        auto [cnt, p1, p2] = IntersectionPoint(*this, L);
-        if(cnt < 2)
-            return ans;
-        double t1 = L.AtInv(p1), t2 = L.AtInv(p2);
-        if(t2 < 0 or t1 > 1)
-            return ans;
-        if(t1 < 0)
-            p1 = a;
-        if(t2 > 1)
-            p2 = b;
-        return ans - ChordArea(p1, p2);
-    }
-};
-\end{lstlisting}
-\subsection{Pair of Intersecting segments using Line Sweep}
+\section{Graph}
+\subsection{2 Satisfiability}
 \begin{lstlisting}
 /*
-Checking for the intersection of two segments is carried out by the intersect () function, using an algorithm based on the oriented area of the triangle.
+  2-Sat Note: Assign true or false values to n variables in order to satisfy
+  a system of constraints on pairs of variables.
+  E.g: (x1 or !x2) and (x2 or x3) and (!x3 or !x3)
 
-The queue of segments is the global variable s, a set<event>. Iterators that specify the position of each segment in the queue (for convenient removal of segments from the queue) are stored in the global array where.
+  x1 = true
+  x2 = true
+  x3 = false
+  is a solution to make the above formula true.
+  MAX must be equal to the maximum number of variables.
+  n passed in init() is the number of variables.
+  O(V+E)
 
-Two auxiliary functions prev() and next() are also introduced, which return iterators to the previous and next elements (or end(), if one does not exist).
+  !a is represented as neg(a).
+  example xor:
+  |a|b|
+  |0|0| x or(a,b)
+  |0|1|
+  |1|0|
+  |1|1| x or(!a, !b)
+  do OR of negation of values of variables for each undesired situation
+  to make it impossible.
 */
-set<seg> s;
-vector<set<seg>::iterator> where;
 
-set<seg>::iterator prev(set<seg>::iterator it) {
-    return it == s.begin() ? s.end() : --it;
-}
+struct two_sat {
+  int n, id;
+  vector<int> g[2 * MAX], rg[2 * MAX], order, st;
+  bool state[2 * MAX], vis[2 * MAX];
+  int scc[2 * MAX];
 
-set<seg>::iterator next(set<seg>::iterator it) {
-    return ++it;
-}
-
-pair<int, int> solve(const vector<seg>& a) {
-    int n = (int)a.size();
-    vector<event> e;
-    for (int i = 0; i < n; ++i) {
-        e.push_back(event(min(a[i].p.x, a[i].q.x), +1, i));
-        e.push_back(event(max(a[i].p.x, a[i].q.x), -1, i));
+  void init(int _n) {
+    n = _n;
+    for (int i = 0; i <= 2 * n; i++) {
+      g[i].clear(), rg[i].clear();
+      state[i] = vis[i] = false;
+      scc[i] = -1;
     }
-    sort(e.begin(), e.end());
+    st.clear(), order.clear();
+  }
 
-    s.clear();
-    where.resize(a.size());
-    for (size_t i = 0; i < e.size(); ++i) {
-        int id = e[i].id;
-        if (e[i].tp == +1) {
-            set<seg>::iterator nxt = s.lower_bound(a[id]), prv = prev(nxt);
-            if (nxt != s.end() && intersect(*nxt, a[id]))
-                return make_pair(nxt->id, id);
-            if (prv != s.end() && intersect(*prv, a[id]))
-                return make_pair(prv->id, id);
-            where[id] = s.insert(nxt, a[id]);
-        } else {
-            set<seg>::iterator nxt = next(where[id]), prv = prev(where[id]);
-            if (nxt != s.end() && prv != s.end() && intersect(*nxt, *prv))
-                return make_pair(prv->id, nxt->id);
-            s.erase(where[id]);
-        }
+  void add_edge(int u, int v) {
+    g[u].pb(v);
+    rg[v].pb(u);
+  }
+
+  void OR(int u, int v) {
+    add_edge(neg(u), v);
+    add_edge(neg(v), u);
+  }
+
+  void XOR(int u, int v) {
+    OR(u, v);
+    OR(neg(u), neg(v));
+  }
+
+  void ForceTrue(int u) {
+    add_edge(neg(u), u);
+  }
+
+  void ForceFalse(int u) {
+    add_edge(u, neg(u));
+  }
+
+  void imply(int u, int v) {
+    OR(neg(u), v);
+  }
+
+  int neg(int u) {
+    if (u <= n) return u + n;
+    return u - n;
+  }
+
+  void dfs(int u, vii g[], bool topsort) {
+    vis[u] = true;
+    for (int v : g[u]) {
+      if (!vis[v]) dfs(v, g, topsort);
     }
+    if (topsort) st.pb(u);
+    else scc[u] = id, order.pb(u);
+  }
 
-    return make_pair(-1, -1);
-}
-\end{lstlisting}
-\subsection{Point in Polygon}
-\begin{lstlisting}
-
-template <typename DT> DT FarthestPairOfPoints(polygon <DT> p){
-    p = ConvexHull(p);
-    int n = p.size();
-    DT ans = -1e9;
-    for(int i = 0, j = 1; i < n; i++)
-    {   
-        for( ; UTriArea(p[i], p[(i + 1) % n], p[(j + 1) % n]) > UTriArea(p[i], p[(i + 1) % n], p[j]) ; j = (j + 1) % n ) ;
-        ans = max(ans, DisSq(p[i], p[j]));
-        ans = max(ans, DisSq(p[(i + 1) % n], p[j]));
+  void build_scc() {
+    for (int i = 1; i <= 2 * n; i++) {
+      if (!vis[i]) dfs(i, g, true);
     }
-    return ans; // will return square of the answer.
-}
-template <typename DT> int PointInConvexPolygon(polygon <int> :: iterator b, polygon <int> :: iterator e, const point <DT> &O){
-    polygon <int> :: iterator lo = b + 2, hi = e - 1, ans = e;
-    while(lo <= hi) {
-        auto mid = lo + (hi - lo) / 2;
-        if(TriArea(*b, O, *mid) >= 0) ans = mid, hi = mid - 1;
-        else lo = mid + 1;
+    reverse(st.begin(), st.end());
+    fill(vis, vis + 2 * n + 1, false);
+    for (int u : st) {
+      if (!vis[u]) id++, dfs(u, rg, false);
     }
-    if (ans == e or abs(UTriArea(*b, *(ans - 1), *ans) - UTriArea(*b, *(ans - 1), O) - UTriArea(*b, *ans, O) - UTriArea(*(ans - 1), *ans, O)) > EPS)
-        return 0;
-    else return (Collinear(*b, *(b + 1), O) or Collinear(*(e - 1), *b, O) or Collinear(*(ans), *(ans - 1), O)) ? -1 : 1;
-} // 0 for outside, -1 for on border, 1 for inside
+  }
 
-template <typename DT> int PointInPolygon(polygon <DT> &P, point <DT> pt) {
-    int n = P.size();
-    int cnt = 0;
-    for(int i = 0, j = 1; i < n; i++, j = (j + 1) % n) {
-        if(TriArea(pt, P[i], P[j]) == 0 and min(P[i], P[j]) <= pt and pt <= max(P[i], P[j]))
-            return -1;
-        cnt += ((P[j].y >= pt.y) - (P[i].y >= pt.y)) * TriArea(pt, P[i], P[j]) > 0; 
+  bool solve() {
+    build_scc();
+    for (int i = 1; i <= n; i++) {
+      if (scc[i] == scc[i + n]) return false;
     }
-    return cnt & 1;
-}
-
-// returns 1e9 if the point is on the polygon 
-int winding_number(vector<PT> &p, const PT& z) { // O(n)
-    if (is_point_on_polygon(p, z)) return 1e9;
-    int n = p.size(), ans = 0;
-    for (int i = 0; i < n; ++i) {
-        int j = (i + 1) % n;
-        bool below = p[i].y < z.y;
-        if (below != (p[j].y < z.y)) {
-            auto orient = orientation(z, p[j], p[i]);
-            if (orient == 0) return 0;
-            if (below == (orient > 0)) ans += below ? 1 : -1;
-        }
+    for (int i = (int)order.size() - 1; i >= 0; i--) {
+      int u = order[i];
+      if (state[neg(u)] == false) state[u] = true;
     }
-    return ans;
-}
-// -1 if strictly inside, 0 if on the polygon, 1 if strictly outside
-int is_point_in_polygon(vector<PT> &p, const PT& z) { // O(n)
-    int k = winding_number(p, z);
-    return k == 1e9 ? 0 : k == 0 ? 1 : -1;
-}\end{lstlisting}
-\subsection{Rotating Calipers}
-\begin{lstlisting}
-template <typename DT> polygon <DT> ConvexHull(polygon <DT> &PT){
-    sort(PT.begin(), PT.end());
-    int m = 0, n = PT.size();
-    
-    polygon <DT> hull(n + n + 2);
-    for(int i = 0; i < n; i++){ 
-        for( ; m > 1 and TriArea(hull[m-2], hull[m-1], PT[i]) <= 0; m-- );
-        hull[m++] = PT[i];
-    }
-    for(int i = n - 2, k = m; i >= 0; i--){
-        for( ; m > k and TriArea(hull[m - 2], hull[m - 1], PT[i]) <= 0; m--);
-        hull[m++] = PT[i];
-    }
-    if(n > 1) 
-        m--;
-    while(hull.size() > m) 
-        hull.pop_back();
-    return hull;
-}
-
-template <typename DT> double MinimumBoundingBox(polygon <DT> P){
-    auto p = ConvexHull(P);
-    int n = p.size();
-    double area = 1e20 + 5;
-    for(int i = 0, l = 1, r = 1, u = 1 ;   i < n ;   i++){
-        point <DT> edge = (p[(i+1)%n]- p[i])/sqrt(DisSq(p[i], p[(i+1)%n]));
-
-        for( ; (edge ^ p[r%n]-p[i]) < (edge ^ p[(r+1)%n] - p[i]); r++); 
-        for( ; u<r || (edge & p[u%n] - p[i]) < (edge & p[(u+1)%n] - p[i]); u++) ;
-        for( ; l<u || (edge ^ p[l%n] - p[i]) > (edge ^ p[(l+1)%n] - p[i]); l++);
-        
-        double w = (edge ^ p[r%n]-p[i]) - (edge ^ p[l%n] - p[i]);
-        double h = UTriArea(p[u%n], p[i], p[(i+1)%n])/sqrt(DisSq(p[i], p[(i+1)%n]));
-        area = min(area,w*h);
-    }
-    if(area>1e19) 
-        area = 0;
-    return area;
-}
-\end{lstlisting}
-\subsection{Some More 2D Geo}
-\begin{lstlisting}
-Tf distancePointLine(Point p, Line l) {
-    return abs(cross(l.b - l.a, p - l.a) / length(l.b - l.a));
-}
-
-// returns the shortest distance from point a to segment s
-Tf distancePointSegment(Point p, Segment s) {
-    if (s.a == s.b) return length(p - s.a);
-    Point v1 = s.b - s.a, v2 = p - s.a, v3 = p - s.b;
-    if (dcmp(dot(v1, v2)) < 0)
-        return length(v2);
-    else if (dcmp(dot(v1, v3)) > 0)
-        return length(v3);
-    else
-        return abs(cross(v1, v2) / length(v1));
-}
-
-// returns the shortest distance from segment p to segment q
-Tf distanceSegmentSegment(Segment p, Segment q) {
-    if (segmentsIntersect(p, q)) return 0;
-    Tf ans = distancePointSegment(p.a, q);
-    ans = min(ans, distancePointSegment(p.b, q));
-    ans = min(ans, distancePointSegment(q.a, p));
-    ans = min(ans, distancePointSegment(q.b, p));
-    return ans;
-}
-
-// returns the projection of point p on line l
-Point projectPointLine(Point p, Line l) {
-    static_assert(is_same<Tf, Ti>::value);
-    Point v = l.b - l.a;
-    return l.a + v * ((Tf)dot(v, p - l.a) / dot(v, v));
-}
-// returns the left side of polygon u after cutting it by ray a->b
-Polygon cutPolygon(Polygon u, Point a, Point b) {
-    using Linear::lineLineIntersection, Linear::onSegment;
-
-    Polygon ret;
-    int n = u.size();
-    for (int i = 0; i < n; i++) {
-        Point c = u[i], d = u[(i + 1) % n];
-        if (dcmp(cross(b - a, c - a)) >= 0) ret.push_back(c);
-        if (dcmp(cross(b - a, d - c)) != 0) {
-            Point t;
-            lineLineIntersection(a, b - a, c, d - c, t);
-            if (onSegment(t, Segment(c, d))) ret.push_back(t);
-        }
-    }
-    return ret;
-}
-// returns false if points are collinear, true otherwise
-// circle p touch each arm of triangle abc
-bool inscribedCircle(Point a, Point b, Point c, Circle &p) {
-    using Linear::distancePointLine;
-    static_assert(is_same<Tf, Ti>::value);
-    if (orient(a, b, c) == 0) return false;
-    Tf u = length(b - c);
-    Tf v = length(c - a);
-    Tf w = length(a - b);
-    p.o = (a * u + b * v + c * w) / (u + v + w);
-    p.r = distancePointLine(p.o, Line(a, b));
     return true;
-}
-
-// set of points A(x, y) such that PA : QA = rp : rq
-Circle apolloniusCircle(Point P, Point Q, Tf rp, Tf rq) {
-    static_assert(is_same<Tf, Ti>::value);
-    rq *= rq;
-    rp *= rp;
-    Tf a = rq - rp;
-    assert(dcmp(a));
-    Tf g = (rq * P.x - rp * Q.x) / a, h = (rq * P.y - rp * Q.y) / a;
-    Tf c =
-        (rq * P.x * P.x - rp * Q.x * Q.x + rq * P.y * P.y - rp * Q.y * Q.y) / a;
-    Point o(g, h);
-    Tf R = sqrt(g * g + h * h - c);
-    return Circle(o, R);
-}
-// returns false if points are collinear
-bool circumscribedCircle(Point a, Point b, Point c, Circle &p) {
-    using Linear::lineLineIntersection;
-    if (orient(a, b, c) == 0) return false;
-    Point d = (a + b) / 2, e = (a + c) / 2;
-    Point vd = rotate90(b - a), ve = rotate90(a - c);
-    bool f = lineLineIntersection(d, vd, e, ve, p.o);
-    if (f) p.r = length(a - p.o);
-    return f;
-}
-
-// Following three methods implement Welzl's algorithm for
-// the smallest enclosing circle problem: Given a set of
-// points, find out the minimal circle that covers them all.
-// boundary(p) determines (if possible) a circle that goes
-// through the points in p. Ideally |p| <= 3.
-// welzl() is a recursive helper function doing the most part
-// of Welzl's algorithm. Call minidisk with the set of points
-// Randomized Complexity: O(CN) with C~10 (practically lesser)
-// TESTED: ICPC Dhaka 2019 - I (CodeMarshal)
-
-Circle boundary(const vector<Point> &p) {
-    Circle ret;
-    int sz = p.size();
-    if (sz == 0)
-        return Circle({0, 0}, 0);
-    else if (sz == 1)
-        ;
-    else if (sz == 2)
-        ret.o = (p[0] + p[1]) / 2, ret.r = length(p[0] - p[1]) / 2;
-    else if (!circumscribedCircle(p[0], p[1], p[2], ret))
-        ret.r = 0;
-    return ret;
-}
-Circle welzl(const vector<Point> &p, int fr, vector<Point> &b) {
-    if (fr >= (int)p.size() || b.size() == 3) return boundary(b);
-
-    Circle c = welzl(p, fr + 1, b);
-    if (!c.contains(p[fr])) {
-        b.push_back(p[fr]);
-        c = welzl(p, fr + 1, b);
-        b.pop_back();
-    }
-    return c;
-}
-Circle minidisk(vector<Point> p) {
-    random_shuffle(p.begin(), p.end());
-    vector<Point> q;
-    return welzl(p, 0, q);
-}
+  }
+} solver;
 \end{lstlisting}
-\section{Graph}
 \subsection{Block Cut Tree}
 \begin{lstlisting}
 bool ap[MAX];
@@ -2749,41 +3228,6 @@ int dis(int u, int v) {
   return lvl[u] + lvl[v] - 2 * lvl[p];
 }
 \end{lstlisting}
-\subsection{Max Clique}
-\begin{lstlisting}
-const int N = 42;
-
-int g[N][N];
-int res;
-long long edges[N];
-//3 ^ (n / 3)
-void BronKerbosch(int n, long long R, long long P, long long X) {
-  if (P == 0LL && X == 0LL) { //here we will find all possible maximal cliques (not maximum) i.e. there is no node which can be included in this set
-    int t = __builtin_popcountll(R);
-    res = max(res, t);
-    return;
-  }
-  int u = 0;
-  while (!((1LL << u) & (P | X))) u ++;
-  for (int v = 0; v < n; v++) {
-    if (((1LL << v) & P) && !((1LL << v) & edges[u])) {
-      BronKerbosch(n, R | (1LL << v), P & edges[v], X & edges[v]);
-      P -= (1LL << v);
-      X |= (1LL << v);
-    }
-  }
-}
-
-int max_clique (int n) {
-  res = 0;
-  for (int i = 1; i <= n; i++) {
-    edges[i - 1] = 0;
-    for (int j = 1; j <= n; j++)  if (g[i][j]) edges[i - 1] |= ( 1LL << (j - 1) );
-  }
-  BronKerbosch(n, 0, (1LL << n) - 1, 0);
-  return res;
-}
-\end{lstlisting}
 \subsection{Min Cost Max Flow}
 \begin{lstlisting}
 mt19937 rnd(chrono::steady_clock::now().time_since_epoch().count());
@@ -2858,64 +3302,6 @@ struct mcmf {
 // add edge from sink to dummy sink (cap = inf, cost = 0)
 // add edge from source to sink (cap = inf, cost = 0)
 // run mcmf, cost returned is the minimum cost
-\end{lstlisting}
-\subsection{Steiner Tree}
-\begin{lstlisting}
-/*
-Find the minimum cost connected tree where at least the important nodes are connected
-dp(x,i) = minimum cost of a tree rooted at i connecting the important node in bitmask x.
-Complexity: O(3^k * n + 2^k * m log m)
-*/
-
-int n, k, m;
-vector<int> imp;//k important nodes
-vector<pair<int, long long>> g[N];
-long long d[32][N]; //[2^k][edge count]
-const long long inf = LLONG_MAX / 3;
-bool vis[N];
-long long MST() {
-  for(int i = 0; i < (1 << k); i++) fill(d[i], d[i] + N, inf);
-  for(int i = 0; i < k; ++i) {
-    d[1 << i][imp[i]] = 0;
-  }
-  priority_queue<pair<long long, int>> q;
-  for(int mask = 1; mask < (1 << k); ++mask) {
-    for(int a = 0; a < mask; ++a) { //you can still fasten this loop to get exact 3^k complexity
-      if((a | mask) != mask) continue; //we only need the subsets
-      int b = mask ^ a;
-      if(b > a) continue;
-      for(int v = 0; v < n; ++v) {
-        d[mask][v] = min(d[mask][v], d[a][v] + d[b][v]);
-      }
-    }
-    memset(vis, 0, sizeof vis);
-    for(int v = 0; v < n; ++v) {
-      if(d[mask][v] == inf) continue;
-      q.emplace(-d[mask][v], v);
-    }
-
-    while(!q.empty()) {
-      long long cost = -q.top().first;
-      int v = q.top().second;
-      q.pop();
-      if(vis[v]) continue;
-      vis[v] = true;
-      for(auto edge : g[v]) {
-        long long ec = cost + edge.second;
-        if(ec < d[mask][edge.first]) {
-          d[mask][edge.first] = ec;
-          q.emplace(-ec, edge.first);
-        }
-      }
-    }
-  }
-
-  long long res = inf;
-  for(int v = 0; v < n; ++v) {
-    res = min(res, d[(1 << k) - 1][v]);
-  }
-  return res;
-}
 \end{lstlisting}
 \subsection{Tree Isomorphism}
 \begin{lstlisting}
@@ -3167,53 +3553,7 @@ for(ll i=0;i<v.size();i++){
     if(v[i])cout << i - 60000 << " : " << v[i] << "\n"; // Handle negative value
 }
 */
-int main()
-{
-    int t;
-    cin >> t;
-    while(t--){
-        string a,b;
-        cin >> a >> b;
-        vector<LL>v1,v2;
 
-        int sign = 0;
-        if(a[0] == '-'){
-            sign = 1 - sign;
-            a.erase(a.begin());
-        }
-        if(b[0] == '-'){
-            sign = 1 - sign;
-            b.erase(b.begin());
-        }
-
-        for(int i = 0;i < a.size();i++){
-            int d = a[i] - '0';
-            v1.push_back(d);
-        }
-        for(int i = 0;i < b.size();i++){
-            int d = b[i] - '0';
-            v2.push_back(d);
-        }
-
-        reverse(all(v1)),reverse(all(v2)); //Reverse needed if v1 is in x^n+x^n-1+.....+x^1+1 form
-        vector<LL>v = Mul(v1,v2);
-
-        int carry = 0;
-        vector<int>answer;
-        for(int i = 0;i < v.size();i++){
-            int temp = v[i];
-            temp += carry;
-            answer.push_back(temp % 10);
-            carry = temp/10;
-        }
-        while(answer.size() > 1 and answer.back() == 0)answer.pop_back();
-        reverse(all(answer));
-
-        for(int i : answer)cout << i;
-        cout << "\n";
-
-    }
-}
 \end{lstlisting}
 \subsection{Fast Walsh Hadamord Transformation}
 \begin{lstlisting}
@@ -3966,64 +4306,6 @@ double adaptive_simpson(double minx, double maxx, double EPS)
 }
 
 \end{lstlisting}
-\subsection{Sqrt Field}
-\begin{lstlisting}
-///Author: anachor
-#include<bits/stdc++.h>
-using namespace std;
-
-const int M = 1e9+7;
-typedef long long LL;
-
-LL mod(LL x) {
-    LL ans = x%M;
-    if (ans < 0)    ans += M;
-    return ans;
-}
-
-template <LL X>
-struct SqrtField {
-    LL a, b, c;     /// (a + b*sqrt(X))/c;
-    SqrtField(LL A=0, LL B=0, LL C=1) : a(A), b(B), c(C) {}
-
-
-    SqrtField operator+(const SqrtField &y) {
-        return SqrtField(mod(a*y.c + y.a*c), mod(b*y.c + y.b*c), mod(c*y.c));
-    }
-
-    SqrtField operator-(const SqrtField &y) {
-        return SqrtField(mod(a*y.c - y.a*c), mod(b*y.c - y.b*c), mod(c*y.c));
-    }
-
-    SqrtField operator*(const SqrtField &y) {
-        return SqrtField(mod(a*y.a + X*y.b*b), mod(a*y.b + b*y.a), mod(c*y.c));
-    }
-
-    SqrtField operator/(const SqrtField &y) {
-        LL A = mod(a*y.a - X*y.b*b);
-        LL B = mod(b*y.a - a*y.b);
-        LL C = mod(y.a*y.a - X*y.b*y.b);
-        A = mod(A*y.c);
-        B = mod(B*y.c);
-        C = mod(C*c);
-        return SqrtField(A,B,C);
-    }
-};
-
-template<LL X>
-ostream& operator<<(ostream &os, const SqrtField<X> &x) {
-    return os<<"("<<x.a<<"+"<<x.b<<"V"<<X<<")/"<<x.c;
-}
-
-int main() {
-    SqrtField<2> c(5);          ///5
-    SqrtField<2> b(0, 1);       ///3 sqrt(2)
-    SqrtField<2> a(3,7,2);      ///(3+7*sqrt(2))/2
-
-    cout<<a+b<<" "<<a-b<<" "<<a*b<<" "<<a/c<<endl;
-    cout<<a*2<<" "<<a/2<<" "<<a+2<<" "<<a-1<<endl;
-}
-\end{lstlisting}
 \subsection{Stirling Numbers}
 \begin{lstlisting}
 //stirling number 2nd kind variation(number of ways to place n marbles in k boxes so that each box has at least x marbles)
@@ -4048,6 +4330,35 @@ ll stir(ll n, ll k) {
   }
   return ret;
 }
+\end{lstlisting}
+\subsection{Subset Convolution}
+\begin{lstlisting}
+
+array<array<int, N>, b> Fh = {0}, Gh = {0}, H = {0};
+
+for (int mask = 0; mask < N; mask++)
+    Fh[__builtin_popcount(mask)][mask] = F[mask],
+    Gh[__builtin_popcount(mask)][mask] = G[mask];
+
+for (int i = 0; i < b; i++)
+    for (int j = 0; j < b; j++)
+        for (int mask = 0; mask < N; mask++)
+            if ((mask & (1 << j)) != 0)
+                Fh[i][mask] += Fh[i][mask ^ (1 << j)],
+                    Gh[i][mask] += Gh[i][mask ^ (1 << j)];
+
+for (int mask = 0; mask < N; mask++)
+    for (int i = 0; i < b; i++)
+        for (int j = 0; j <= i; j++)
+            H[i][mask] += Fh[j][mask] * Gh[i - j][mask];
+
+for (int i = 0; i < b; i++)
+    for (int j = 0; j < b; j++)
+        for (int mask = 0; mask < N; mask++)
+            if ((mask & (1 << j)) != 0) H[i][mask] -= H[i][mask ^ (1 << j)];
+
+for (int mask = 0; mask < N; mask++)
+    Ans[mask] = H[__builtin_popcount(mask)][mask];
 \end{lstlisting}
 \section{String Algorithms}
 \subsection{Aho Corasick}
@@ -4693,113 +5004,6 @@ vector<int> calcz(string s) {
 }
 \end{lstlisting}
 \section{Tricks}
-\subsection{2 Satisfiability}
-\begin{lstlisting}
-/*
-  2-Sat Note: Assign true or false values to n variables in order to satisfy
-  a system of constraints on pairs of variables.
-  E.g: (x1 or !x2) and (x2 or x3) and (!x3 or !x3)
-
-  x1 = true
-  x2 = true
-  x3 = false
-  is a solution to make the above formula true.
-  MAX must be equal to the maximum number of variables.
-  n passed in init() is the number of variables.
-  O(V+E)
-
-  !a is represented as neg(a).
-  example xor:
-  |a|b|
-  |0|0| x or(a,b)
-  |0|1|
-  |1|0|
-  |1|1| x or(!a, !b)
-  do OR of negation of values of variables for each undesired situation
-  to make it impossible.
-*/
-
-struct two_sat {
-  int n, id;
-  vector<int> g[2 * MAX], rg[2 * MAX], order, st;
-  bool state[2 * MAX], vis[2 * MAX];
-  int scc[2 * MAX];
-
-  void init(int _n) {
-    n = _n;
-    for (int i = 0; i <= 2 * n; i++) {
-      g[i].clear(), rg[i].clear();
-      state[i] = vis[i] = false;
-      scc[i] = -1;
-    }
-    st.clear(), order.clear();
-  }
-
-  void add_edge(int u, int v) {
-    g[u].pb(v);
-    rg[v].pb(u);
-  }
-
-  void OR(int u, int v) {
-    add_edge(neg(u), v);
-    add_edge(neg(v), u);
-  }
-
-  void XOR(int u, int v) {
-    OR(u, v);
-    OR(neg(u), neg(v));
-  }
-
-  void ForceTrue(int u) {
-    add_edge(neg(u), u);
-  }
-
-  void ForceFalse(int u) {
-    add_edge(u, neg(u));
-  }
-
-  void imply(int u, int v) {
-    OR(neg(u), v);
-  }
-
-  int neg(int u) {
-    if (u <= n) return u + n;
-    return u - n;
-  }
-
-  void dfs(int u, vii g[], bool topsort) {
-    vis[u] = true;
-    for (int v : g[u]) {
-      if (!vis[v]) dfs(v, g, topsort);
-    }
-    if (topsort) st.pb(u);
-    else scc[u] = id, order.pb(u);
-  }
-
-  void build_scc() {
-    for (int i = 1; i <= 2 * n; i++) {
-      if (!vis[i]) dfs(i, g, true);
-    }
-    reverse(st.begin(), st.end());
-    fill(vis, vis + 2 * n + 1, false);
-    for (int u : st) {
-      if (!vis[u]) id++, dfs(u, rg, false);
-    }
-  }
-
-  bool solve() {
-    build_scc();
-    for (int i = 1; i <= n; i++) {
-      if (scc[i] == scc[i + n]) return false;
-    }
-    for (int i = (int)order.size() - 1; i >= 0; i--) {
-      int u = order[i];
-      if (state[neg(u)] == false) state[u] = true;
-    }
-    return true;
-  }
-} solver;
-\end{lstlisting}
 \subsection{Array Compression}
 \begin{lstlisting}
 void compress(int n) {
@@ -4813,73 +5017,6 @@ void compress(int n) {
   }
 } 
 \end{lstlisting}
-\subsection{Bitset With Range Operations}
-\begin{lstlisting}
-struct Bitset {
-    const static int B = 6, K = 64, X = 63;
-    ///returns mask with bits l to r set, and others reset
-    static inline ULL getmask(int l, int r) {
-        if (r==X)  return -(1ULL<<l);
-        return (1ULL<<(r+1)) - (1ULL<<l);
-    }
-    vector<ULL> bs;
-    int N;
-    Bitset(int n) {
-        N = n/K+1;
-        bs.resize(N);
-    }
-    void assign(ULL x) {
-        fill(bs.begin()+1, bs.end(), 0);
-        bs[0] = x;
-    }
-    bool get(int i) {
-        return bs[i>>B] & (1ULL<<(i&X));
-    }
-    void set(int i) {
-        bs[i>>B] |= (1ULL<<(i&X));
-    }
-    void reset(int i) {
-        bs[i>>B] &= ~(1ULL<<(i&X));
-    }
-    void flip(int i) {
-        bs[i>>B] ^= (1ULL<<(i&X));
-    }
-    void set(int l, int r) {
-        int idl = l>>B, idr = r>>B;
-        int posl = l&X, posr = r&X;
-        if (idl == idr) {
-            bs[idl] |= getmask(posl, posr);
-            return;
-        }
-        bs[idl] |= getmask(posl, X);
-        bs[idr] |= getmask(0, posr);
-        for (int id = idl+1; id < idr; id++)    bs[id] = -1;
-    }
-    void reset(int l, int r) {
-        int idl = l>>B, idr = r>>B;
-        int posl = l&X, posr = r&X;
-        if (idl == idr) {
-            bs[idl] &= ~getmask(posl, posr);
-            return;
-        }
-        bs[idl] &= ~getmask(posl, X);
-        bs[idr] &= ~getmask(0, posr);
-        for (int id = idl+1; id < idr; id++)    bs[id] = 0;
-    }
-    void flip(int l, int r) {
-        int idl = l>>B, idr = r>>B;
-        int posl = l&X, posr = r&X;
-        if (idl == idr) {
-            bs[idl] ^= getmask(posl, posr);
-            return;
-        }
-        bs[idl] ^= getmask(posl, X);
-        bs[idr] ^= getmask(0, posr);
-        for (int id = idl+1; id < idr; id++)    bs[id] = ~bs[id];
-    }
-};
-
-\end{lstlisting}
 \subsection{Different Cumulative Sum}
 \begin{lstlisting}
 ///cost = sum of (i * a[i]) where i starts from the beginning for every range
@@ -4891,68 +5028,6 @@ ll cost(int i, int j) {
   ll baad = sum[j];
   if (i) baad -= sum[i - 1];
   return ret - i * baad;
-} 
-\end{lstlisting}
-\subsection{Factoradic Permutation Trick}
-\begin{lstlisting}
-vector<int> to_factoradic(ll n, int sz = 0) {
-  vector<int> ret;
-  int base = 1;
-  while (n) {
-    ret.pb(n % base);
-    n /= base; base++;
-  }
-  while ((int)ret.size() < sz) ret.pb(0);
-  reverse(ret.begin(), ret.end());
-  return ret;
-}
-ll to_decimal(vector<int> &v) {
-  int n = (int)v.size();
-  ll ret = 0, base = n;
-  for (int i = 0; i < n; i++, base--) {
-    ret = ( ( (ret * base) % MOD ) + v[i] ) % MOD;
-  }
-  return ret;
-}
-// returns permutation of size n from given factoradic number
-vector<int> to_permutation(vector<int> &v) {
-  vector<int> ret;
-  ordered_set<int> st;
-  int n = (int)v.size();
-  for (int i = 0; i < n; i++) st.insert(i);
-  for (int x : v) {
-    int val = *st.find_by_order(x);
-    st.erase(val); ret.pb(val);
-  }
-  return ret;
-}
-// returns lexicographical index of permutation in factoradic system
-vector<int> order_of_permutation(vector<int> &p) {
-  vector<int> ret; ordered_set<int> st;
-  int n = (int)p.size();
-  for (int i = 0; i < n; i++) st.insert(i);
-  for (int x : p) {
-    int idx = st.order_of_key(x);
-    st.erase(x); ret.pb(idx);
-  }
-  return ret;
-}
-// returns sum of indices a and b in factoradic system
-vector<int> add_order(vector<int> &a, vector<int> &b) {
-  int n = (int)a.size();
-  vector<int> ret(n); int carry = 0;
-  for (int i = n - 1, base = 1; i >= 0; i--, base++) {
-    ret[i] = a[i] + b[i] + carry;
-    carry = ret[i] / (base); ret[i] %= base;
-  }
-  return ret;
-}
-// returns kth lexicographically smallest permutation of size n
-// 0th permutation is 0 1 2 ... n-1
-vector<int> kth_permutation(int k, int n) {
-  // need to handle k >= n! if necessary
-  vector<int> k_factoradic = to_factoradic(k, n);
-  return to_permutation(k_factoradic);
 } 
 \end{lstlisting}
 \subsection{Fractional Binary Search}

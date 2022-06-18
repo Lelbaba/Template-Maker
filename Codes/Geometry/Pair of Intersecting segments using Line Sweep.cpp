@@ -1,48 +1,70 @@
 /*
-Checking for the intersection of two segments is carried out by the intersect () function, using an algorithm based on the oriented area of the triangle.
+Checking for the intersection of two segments is carried out by the intersect ()
+function, using an algorithm based on the oriented area of the triangle.
 
-The queue of segments is the global variable s, a set<event>. Iterators that specify the position of each segment in the queue (for convenient removal of segments from the queue) are stored in the global array where.
+The queue of segments is the global variable s, a set<event>. Iterators that
+specify the position of each segment in the queue (for convenient removal of
+segments from the queue) are stored in the global array where.
 
-Two auxiliary functions prev() and next() are also introduced, which return iterators to the previous and next elements (or end(), if one does not exist).
+Two auxiliary functions prev() and next() are also introduced, which return
+iterators to the previous and next elements (or end(), if one does not exist).
 */
-set<seg> s;
-vector<set<seg>::iterator> where;
-
-set<seg>::iterator prev(set<seg>::iterator it) {
-    return it == s.begin() ? s.end() : --it;
+Tf yvalSegment(const Line &s, Tf x) {
+    if (dcmp(s.a.x - s.b.x) == 0) return s.a.y;
+    return s.a.y + (s.b.y - s.a.y) * (x - s.a.x) / (s.b.x - s.a.x);
 }
 
-set<seg>::iterator next(set<seg>::iterator it) {
-    return ++it;
-}
-
-pair<int, int> solve(const vector<seg>& a) {
-    int n = (int)a.size();
-    vector<event> e;
-    for (int i = 0; i < n; ++i) {
-        e.push_back(event(min(a[i].p.x, a[i].q.x), +1, i));
-        e.push_back(event(max(a[i].p.x, a[i].q.x), -1, i));
+struct SegCompare {
+    bool operator()(const Segment &p, const Segment &q) const {
+        Tf x = max(min(p.a.x, p.b.x), min(q.a.x, q.b.x));
+        return dcmp(yvalSegment(p, x) - yvalSegment(q, x)) < 0;
     }
-    sort(e.begin(), e.end());
+};
 
-    s.clear();
-    where.resize(a.size());
-    for (size_t i = 0; i < e.size(); ++i) {
-        int id = e[i].id;
-        if (e[i].tp == +1) {
-            set<seg>::iterator nxt = s.lower_bound(a[id]), prv = prev(nxt);
-            if (nxt != s.end() && intersect(*nxt, a[id]))
-                return make_pair(nxt->id, id);
-            if (prv != s.end() && intersect(*prv, a[id]))
-                return make_pair(prv->id, id);
-            where[id] = s.insert(nxt, a[id]);
+multiset<Segment, SegCompare> st;
+typedef multiset<Segment, SegCompare>::iterator iter;
+
+iter prev(iter it) { return it == st.begin() ? st.end() : --it; }
+
+iter next(iter it) { return it == st.end() ? st.end() : ++it; }
+
+struct Event {
+    Tf x;
+    int tp, id;
+    Event(Ti x, int tp, int id) : x(x), tp(tp), id(id) {}
+    bool operator<(const Event &p) const {
+        if (dcmp(x - p.x)) return x < p.x;
+        return tp > p.tp;
+    }
+};
+
+bool anyIntersection(const vector<Segment> &v) {
+    using Linear::segmentsIntersect;
+    vector<Event> ev;
+    for (int i = 0; i < (int)v.size(); ++i) {
+        ev.push_back(Event(min(v[i].a.x, v[i].b.x), +1, i));
+        ev.push_back(Event(max(v[i].a.x, v[i].b.x), -1, i));
+    }
+    sort(ev.begin(), ev.end());
+
+    st.clear();
+    vector<iter> where(v.size());
+    for (auto &cur : ev) {
+        int id = cur.id;
+        if (cur.tp == 1) {
+            iter nxt = st.lower_bound(v[id]);
+            iter pre = prev(nxt);
+            if (pre != st.end() && segmentsIntersect(*pre, v[id])) return true;
+            if (nxt != st.end() && segmentsIntersect(*nxt, v[id])) return true;
+            where[id] = st.insert(nxt, v[id]);
         } else {
-            set<seg>::iterator nxt = next(where[id]), prv = prev(where[id]);
-            if (nxt != s.end() && prv != s.end() && intersect(*nxt, *prv))
-                return make_pair(prv->id, nxt->id);
-            s.erase(where[id]);
+            iter nxt = next(where[id]);
+            iter pre = prev(where[id]);
+            if (pre != st.end() && nxt != st.end() &&
+                segmentsIntersect(*pre, *nxt))
+                return true;
+            st.erase(where[id]);
         }
     }
-
-    return make_pair(-1, -1);
+    return false;
 }
