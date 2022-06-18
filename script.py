@@ -7,7 +7,7 @@ def ProcessFile(f, name, W):
             W.write(lines)
     W.write("\\end{lstlisting}\n")
 def ProcessDir(dir,name,depth, W):
-    for subdir in reversed(os.listdir(dir)):
+    for subdir in sorted(os.listdir(dir)):
         if subdir == 'desktop.ini':
             continue
         s = '\\'
