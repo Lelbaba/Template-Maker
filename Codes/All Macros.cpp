@@ -22,3 +22,8 @@ int ky[] =              {-1,+1,+2,+2,+1,-1,-2,-2};
 
 #define DEBUG(x)        cerr << #x << " = " << x << endl
 
+template<size_t N>
+bitset<N> rotl( std::bitset<N> const& bits, unsigned count ) {
+    count %= N;  // Limit count to range [0,N)
+    return bits << count | bits >> (N - count);
+}
