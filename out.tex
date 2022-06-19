@@ -100,7 +100,11 @@ int ky[] =              {-1,+1,+2,+2,+1,-1,-2,-2};
 
 #define DEBUG(x)        cerr << #x << " = " << x << endl
 
-\end{lstlisting}
+template<size_t N>
+bitset<N> rotl( std::bitset<N> const& bits, unsigned count ) {
+    count %= N;  // Limit count to range [0,N)
+    return bits << count | bits >> (N - count);
+}\end{lstlisting}
 \section{DP}
 \subsection{Convex Hull Trick}
 \begin{lstlisting}
@@ -660,56 +664,56 @@ struct implicit_treap {
     now->sum += (now->lft ? now->lft->sum : 0) + (now->rt ? now->rt->sum : 0);
   }
   // reverse substring
-  // void push(pnode now) {
-  //   if (!now || !now->rev) return;
-  //   now->rev = false;
-  //   swap(now->lft, now->rt);
-  //   if (now->lft) now->lft->rev ^= true;
-  //   if (now->rt) now->rt->rev ^= true;
-  // }
-  // sort ascending or descending
-  // void push(pnode now) {
-  //   if (!now || !now->sort_kor) return;
-  //   if (now->sort_kor == -1) swap(now->lft, now->rt);
-  //   int cnt[26];
-  //   for (int i = 0; i < 26; i++) cnt[i] = now->cnt[i];
-  //   int idx = 0;
-  //   if (now->lft) {
-  //     memset(now->lft->cnt, 0, sizeof now->lft->cnt);
-  //     int lft_sz = get_sz(now->lft);
-  //     while (idx < 26 && lft_sz) {
-  //       int mn = min(cnt[idx], lft_sz);
-  //       now->lft->cnt[idx] = mn;
-  //       cnt[idx] -= mn; lft_sz -= mn;
-  //       if (!cnt[idx]) idx++;
-  //     }
-  //     now->lft->sort_kor = now->sort_kor;
-  //   }
-  //   while (!cnt[idx]) idx++;
-  //   now->val = idx, cnt[idx]--;
-  //   if (!cnt[idx]) idx++;
-  //   if (now->rt) {
-  //     memset(now->rt->cnt, 0, sizeof now->rt->cnt);
-  //     int rt_sz = get_sz(now->rt);
-  //     while (idx < 26 && rt_sz) {
-  //       int mn = min(cnt[idx], rt_sz);
-  //       now->rt->cnt[idx] = mn;
-  //       cnt[idx] -= mn; rt_sz -= mn;
-  //       if (!cnt[idx]) idx++;
-  //     }
-  //     now->rt->sort_kor = now->sort_kor;
-  //   }
-  //   if (now->sort_kor == -1) swap(now->lft, now->rt);
-  //   now->sort_kor = 0;
-  // }
-  // void combine(pnode now) {
-  //   if (!now) return;
-  //   memset(now->cnt, 0, sizeof now->cnt);
-  //   for (int i = 0; i < 26; i++) {
-  //     now->cnt[i] = (now->lft ? now->lft->cnt[i] : 0) + (now->rt ? now->rt->cnt[i] : 0);
-  //   }
-  //   now->cnt[now->val]++;
-  // }
+  void push(pnode now) {
+    if (!now || !now->rev) return;
+    now->rev = false;
+    swap(now->lft, now->rt);
+    if (now->lft) now->lft->rev ^= true;
+    if (now->rt) now->rt->rev ^= true;
+  }
+  sort ascending or descending
+  void push(pnode now) {
+    if (!now || !now->sort_kor) return;
+    if (now->sort_kor == -1) swap(now->lft, now->rt);
+    int cnt[26];
+    for (int i = 0; i < 26; i++) cnt[i] = now->cnt[i];
+    int idx = 0;
+    if (now->lft) {
+      memset(now->lft->cnt, 0, sizeof now->lft->cnt);
+      int lft_sz = get_sz(now->lft);
+      while (idx < 26 && lft_sz) {
+        int mn = min(cnt[idx], lft_sz);
+        now->lft->cnt[idx] = mn;
+        cnt[idx] -= mn; lft_sz -= mn;
+        if (!cnt[idx]) idx++;
+      }
+      now->lft->sort_kor = now->sort_kor;
+    }
+    while (!cnt[idx]) idx++;
+    now->val = idx, cnt[idx]--;
+    if (!cnt[idx]) idx++;
+    if (now->rt) {
+      memset(now->rt->cnt, 0, sizeof now->rt->cnt);
+      int rt_sz = get_sz(now->rt);
+      while (idx < 26 && rt_sz) {
+        int mn = min(cnt[idx], rt_sz);
+        now->rt->cnt[idx] = mn;
+        cnt[idx] -= mn; rt_sz -= mn;
+        if (!cnt[idx]) idx++;
+      }
+      now->rt->sort_kor = now->sort_kor;
+    }
+    if (now->sort_kor == -1) swap(now->lft, now->rt);
+    now->sort_kor = 0;
+  }
+  void combine(pnode now) {
+    if (!now) return;
+    memset(now->cnt, 0, sizeof now->cnt);
+    for (int i = 0; i < 26; i++) {
+      now->cnt[i] = (now->lft ? now->lft->cnt[i] : 0) + (now->rt ? now->rt->cnt[i] : 0);
+    }
+    now->cnt[now->val]++;
+  }
   ///first pos ta elements go to left, others go to right
   void split(pnode now, pnode &lft, pnode &rt, int pos, int add = 0) {
     if (!now) return void(lft = rt = NULL);
