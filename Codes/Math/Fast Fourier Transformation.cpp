@@ -1,67 +1,84 @@
-typedef complex<double> base;
+/**
+1. Whenever possible remove leading zeros.
+2. Custom Complex class may slightly improve performance.
+3. Use pairfft to do two ffts of real vectors at once, slightly less accurate
+than doing two ffts, but faster by about 30%.
+4. FFT accuracy depends on answer. x <= 5e14 (double), x <= 1e18(long double)
+   where x = max(ans[i]) for FFT, and x = N*mod for anymod **/
+const double PI = acos(-1.0L);
+int N;
+vector<int> perm;
+vector<CD> wp[2];
 
-void fft(vector<base> & a, bool invert) {
-    int n = (int)a.size();
+void precalculate(int n) {
+    assert((n & (n - 1)) == 0);
+    N = n;
+    perm = vector<int> (N, 0);
+    for (int k = 1; k < N; k <<= 1)
+        for (int i = 0; i < k; i++)
+            perm[i] <<= 1, perm[i + k] = 1 + perm[i];
 
-    for (int i = 1, j = 0; i<n; ++i) {
-        int bit = n >> 1;
-        for (; j >= bit; bit >>= 1)j -= bit;
-        j += bit;
-        if (i < j)swap(a[i], a[j]);
+    wp[0] = wp[1] = vector<CD>(N);
+    for (int i = 0; i < N; i++) {
+        wp[0][i] = CD(cos(2 * PI * i / N),  sin(2 * PI * i / N));
+        wp[1][i] = CD(cos(2 * PI * i / N), -sin(2 * PI * i / N));
     }
+}
 
-    for (int len = 2; len <= n; len <<= 1) {
-        double ang = 2 * PI / len * (invert ? -1 : 1);
-        base wlen(cos(ang), sin(ang));
-        for (int i = 0; i<n; i += len) {
-            base w(1);
-            for (int j = 0; j<len / 2; ++j) {
-                base u = a[i + j], v = a[i + j + len / 2] * w;
-                a[i + j] = u + v;
-                a[i + j + len / 2] = u - v;
-                w *= wlen;
+void fft(vector<CD> &v, bool invert = false) {
+    if (v.size() != perm.size())    precalculate(v.size());
+
+    for (int i = 0; i < N; i++)
+        if (i < perm[i])
+            swap(v[i], v[perm[i]]);
+
+    for (int len = 2; len <= N; len *= 2) {
+        for (int i = 0, d = N / len; i < N; i += len) {
+            for (int j = 0, idx = 0; j < len / 2; j++, idx += d) {
+                CD x = v[i + j];
+                CD y = wp[invert][idx] * v[i + j + len / 2];
+                v[i + j] = x + y;
+                v[i + j + len / 2] = x - y;
             }
         }
     }
-    if (invert)for (int i = 0; i<n; ++i)a[i] /= n;
+
+    if (invert) {
+        for (int i = 0; i < N; i++) v[i] /= N;
+    }
 }
 
-vector<LL> Mul(vector<LL>& a, vector<LL>& b)
-{
-    vector<base> fa(a.begin(), a.end()), fb(b.begin(), b.end());
-    int n = 1;
-    while (n < max(a.size(), b.size()))  n <<= 1;
-    n <<= 1;
-    fa.resize(n), fb.resize(n);
+void pairfft(vector<CD> &a, vector<CD> &b, bool invert = false) {
+    int N = a.size();
+    vector<CD> p(N);
+    for (int i = 0; i < N; i++) p[i] = a[i] + b[i] * CD(0, 1);
+    fft(p, invert);
+    p.push_back(p[0]);
 
-    fft(fa, false), fft(fb, false);
-    for (int i = 0; i<n; ++i)fa[i] *= fb[i];
+    for (int i = 0; i < N; i++) {
+        if (invert) {
+            a[i] = CD(p[i].real(), 0);
+            b[i] = CD(p[i].imag(), 0);
+        } else {
+            a[i] = (p[i] + conj(p[N - i])) * CD(0.5, 0);
+            b[i] = (p[i] - conj(p[N - i])) * CD(0, -0.5);
+        }
+    }
+}
+
+vector<LL> multiply(const vector<LL> &a, const vector<LL> &b) {
+    int n = 1;
+    while (n < a.size() + b.size())  n <<= 1;
+
+    vector<CD> fa(a.begin(), a.end()), fb(b.begin(), b.end());
+    fa.resize(n); fb.resize(n);
+
+//        fft(fa); fft(fb);
+    pairfft(fa, fb);
+    for (int i = 0; i < n; i++) fa[i] = fa[i] * fb[i];
     fft(fa, true);
 
-    vector<LL> res;
-    res.resize(n);
-    for (int i = 0; i<n; ++i)res[i] = round(fa[i].real());
-    return res;
+    vector<LL> ans(n);
+    for (int i = 0; i < n; i++)     ans[i] = round(fa[i].real());
+    return ans;
 }
-/*
-n degree Polynomial division: (one of the vector)
-coefficient of x^i is replaced with coefficient of x^(n-i).
-x^(i-j) starts from n+1 ends at 2*n-1
-*/
-/*
-All possible sum of 3 different index.
-vector<ll>v=Mul(v1,v2);
-v=Mul(v,v3);
-vector<ll>dbl(v.size()),tri(v.size());
-for(ll i=0;i<v1.size();i++){
-    dbl[i+i]=v1[i]*v2[i]; // All (i,i) Pairs
-    tri[i+i+i]=v1[i]*v2[i]*v3[i]; // All (i,i,i) Triplets
-}
-dbl=Mul(dbl,v3); // All (i,i,j) Triplets
-for(ll i=0;i<v.size();i++){
-    v[i] = v[i] - (3 * dbl[i] - 2 * tri[i]); // 3 (i,i,j) Triplets have 3 (i,i,i) triplets. So Remove 2 (i,i,i) triplets.
-    v[i]/=6; // (i,j,k) can be oriented in 3! way
-    if(v[i])cout << i - 60000 << " : " << v[i] << "\n"; // Handle negative value
-}
-*/
-

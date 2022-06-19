@@ -1,41 +1,30 @@
-// need to add modulo to res[i] in Mul
-vector<ll> Mul_mod(vector<ll>& a, vector<ll>& b, ll mod) {
-  ll sqrt_mod = (ll)sqrtl(mod);
-  vector<ll> a0(a.size()), a1(a.size());
-  vector<ll> b0(b.size()), b1(b.size());
-  for (int i = 0; i < a.size(); i++) {
-    a0[i] = a[i] % sqrt_mod;
-    a1[i] = a[i] / sqrt_mod;
-  }
-  for (int i = 0; i < b.size(); i++) {
-    b0[i] = b[i] % sqrt_mod;
-    b1[i] = b[i] / sqrt_mod;
-  }
-  vector<ll> a01(a.size()), b01(b.size());
-  for (int i = 0; i < a.size(); i++) {
-    a01[i] = a0[i] + a1[i];
-    if (a01[i] >= mod) a01[i] -= mod;
-  }
-  for (int i = 0; i < b.size(); i++) {
-    b01[i] = b0[i] + b1[i];
-    if (b01[i] >= mod) b01[i] -= mod;
-  }
-  vector<ll> mid = Mul(a01, b01);
-  vector<ll> a0b0 = Mul(a0, b0);
-  vector<ll> a1b1 = Mul(a1, b1);
-  for (int i = 0; i < mid.size(); i++) {
-    mid[i] = (mid[i] - a0b0[i] + mod) % mod;
-    mid[i] = (mid[i] - a1b1[i] + mod) % mod;
-  }
-  vector<ll> res = a0b0;
-  for (int i = 0; i < res.size(); i++) {
-    res[i] += (sqrt_mod * mid[i]) % mod;
-    if (res[i] >= mod) res[i] -= mod;
-  }
-  sqrt_mod = (sqrt_mod * sqrt_mod) % mod;
-  for (int i = 0; i < res.size(); i++) {
-    res[i] += (sqrt_mod * a1b1[i]) % mod;
-    if (res[i] >= mod) res[i] -= mod;
-  }
-  return res;
-} 
+const int M = 1e9 + 7, B = sqrt(M) + 1;
+vector<LL> anyMod(const vector<LL> &a, const vector<LL> &b) {
+    int n = 1;
+    while (n < a.size() + b.size())  n <<= 1;
+    vector<CD> al(n), ar(n), bl(n), br(n);
+
+    for (int i = 0; i < a.size(); i++)  al[i] = a[i] % M / B, ar[i] = a[i] % M % B;
+    for (int i = 0; i < b.size(); i++)  bl[i] = b[i] % M / B, br[i] = b[i] % M % B;
+
+    pairfft(al, ar); pairfft(bl, br);
+//        fft(al); fft(ar); fft(bl); fft(br);
+
+    for (int i = 0; i < n; i++) {
+        CD ll = (al[i] * bl[i]), lr = (al[i] * br[i]);
+        CD rl = (ar[i] * bl[i]), rr = (ar[i] * br[i]);
+        al[i] = ll; ar[i] = lr;
+        bl[i] = rl; br[i] = rr;
+    }
+
+    pairfft(al, ar, true); pairfft(bl, br, true);
+//        fft(al, true); fft(ar, true); fft(bl, true); fft(br, true);
+
+    vector<LL> ans(n);
+    for (int i = 0; i < n; i++) {
+        LL right = round(br[i].real()), left = round(al[i].real());;
+        LL mid = round(round(bl[i].real()) + round(ar[i].real()));
+        ans[i] = ((left % M) * B * B + (mid % M) * B + right) % M;
+    }
+    return ans;
+}
