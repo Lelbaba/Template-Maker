@@ -1,6 +1,9 @@
-\newcommand\TEAM{IUT SuperSonic, Islamic University of Technology}
+\newcommand\TEAM{IUT SuperSonic}
+\newcommand\UNI{Islamic University of Technology}
+\newcommand\COLS{3}
 \newcommand\ORT{portrait}
-\documentclass[10pt,a4paper,onesided]{article}
+\newcommand\FSZ{10}
+\documentclass[FSZ,a4paper,onesided]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{listings}
@@ -41,7 +44,7 @@
 \fancyhf{}
 \renewcommand{\headrulewidth}{1pt}
 \pagestyle{fancy}
-\lhead{\large{\textbf{\TEAM}}}
+\lhead{\large{\textbf{\TEAM}, \textbf{\UNI}}}
 \rhead{\thepage}
 
 \titleformat*{\subsection}{\large\bfseries}
@@ -58,22 +61,13 @@
 
 \begin{document}
 
-\begin{multicols*}{3}
+\begin{multicols*}{\COLS}
 \pagenumbering{gobble}
 \tableofcontents
 \newpage
 \pagenumbering{arabic}
 \lstloadlanguages{C++,Java}
-\subsection*{Sublime Build}
-    \begin{lstlisting}
-{
-"cmd" : ["g++ -std=c++14 $file_name -o $file_base_name && timeout 4s ./$file_base_name<inputf.in>outputf.in"], 
-"selector" : "source.cpp",
-"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
-"shell": true,
-"working_dir" : "$file_path"
-}
-    \end{lstlisting}
+
 \section{All Macros}
 \begin{lstlisting}
 //#pragma GCC optimize("Ofast")
@@ -774,101 +768,73 @@ struct implicit_treap {
 using namespace std;
 #define pi acos(-1.0)
 #define fastio ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL)
-vector<long long>v[100005],vc;
-long long x[200005][40],mp[100005],ml[100005],nd,pos[100005];
-void build(long long n)
-{
-    long long a,i,j,k,b,c;
-    a=1;
-    for(i=0; i<n; i++)
-    {
-        x[i][0]=vc[i];
-    }
-    b=1;
-    while(a<n)
-    {
-        for(i=0; i<n-a; i++)
-        {
-            x[i][b]=min(x[i][b-1],x[i+a][b-1]);
-        }
-        a*=2;
-        b++;
-    }
-    return;
-}
-long long query(long long a, long long b)
-{
-    long long c,d,e,f;
-    //if(a==b)return x[a][0];
-    c=log2(1.0*(b-a+1));
-    //cout<<c<<' ';
-    f=powl(1.0*2,1.0*c);
-    d=x[a][c];
-    e=x[b-f+1][c];
-    //cout<<b-f+1<<' ';
-    return min(d,e);
+vector <int> v[100005], vc;
+int x[200005][40], mp[100005], ml[100005], nd, pos[100005];
 
+void build(int n) {
+    for (int i = 0; i < n; i++)
+        x[i][0] = vc[i];
+    for (int a = 1, b = 1 ; a < n; a *= 2, b++)
+        for (int i = 0; i < n - a; i++)
+            x[i][b] = min(x[i][b - 1], x[i + a][b - 1]);
 }
-void tour_de_euler(long long p, long long q)
-{
+int query(int a, int b) {
+    //if(a==b)return x[a][0];
+    int c = 31 - __builtin_clz(b - a + 1); // log2(b - a + 1)
+    int f = 1 << c;
+    int d = x[a][c];
+    int e = x[b - f + 1][c];
+    return min(d, e);
+}
+void tour_de_euler(int p, int q) {
     vc.push_back(mp[p]);
     //nd++;
-    if(!pos[mp[p]])pos[mp[p]]=nd;
+    if (!pos[mp[p]])pos[mp[p]] = nd;
     nd++;
-    for(int i=0;i<v[p].size();i++){
-        if(v[p][i]==q)continue;
-        tour_de_euler(v[p][i],p);
+    for (int e: v[p]) if(e != q) {
+        tour_de_euler(e, p);
         vc.push_back(mp[p]); nd++;
     }
-    return;
-
 }
-void dfs(long long p, long long q)
-{
-    mp[p]=nd;
-    ml[nd]=p;
+void dfs(int p, int q) {
+    mp[p] = nd, ml[nd] = p;
     nd++;
-    for(int i=0;i<v[p].size();i++){
-        if(v[p][i]==q)continue;
-        dfs(v[p][i],p);
-    }
-    return;
-
+    for (int e: v[p]) if (p != q)
+        dfs(e, p);
 }
 
-long long lca(long long a, long long b)
-{
-    a=pos[mp[a]];
-    b=pos[mp[b]];
-    if(a>b)
-        swap(a,b);
-    long long c=query(a,b);
+int lca(int a, int b) {
+    a = pos[mp[a]];
+    b = pos[mp[b]];
+    if (a > b)
+        swap(a, b);
+    int c = query(a, b);
     return ml[c];
 }
 
 int main()
 {
     //fastio;
-    long long a=0,b=0,c,d,e,f=0,l,g,m,n,k,i,j,t,p,q;
-    cin>>n;
-    for(i=1; i<n; i++)
+    int a = 0, b = 0, c, d, e, f = 0, l, g, m, n, k, i, j, t, p, q;
+    cin >> n;
+    for (i = 1; i < n; i++)
     {
-        cin>>a>>b;
+        cin >> a >> b;
         v[a].push_back(b);
         v[b].push_back(a);
     }
-    nd=1;
-    dfs(1,-1);
-    vc.push_back(696969696969);
-    nd=1;
-    tour_de_euler(1,-1);
-    l=vc.size();
-    build(l+2);
-    cin>>q;
-    while(q--){
-        cin>>a>>b;
-        cout<<lca(a,b)<<endl;
-    }
+    // nd = 1;
+    // dfs(1, -1);
+    // vc.push_back(6969696);
+    // nd = 1;
+    // tour_de_euler(1, -1);
+    // l = vc.size();
+    // build(l + 2);
+    // cin >> q;
+    // while (q--) {
+    //     cin >> a >> b;
+    //     cout << lca(a, b) << endl;
+    // }
 
     return 0;
 }
@@ -1829,8 +1795,7 @@ Tf distancePointSegment(Point p, Segment s) {
         return length(v2);
     else if (dcmp(dot(v1, v3)) > 0)
         return length(v3);
-    else
-        return abs(cross(v1, v2) / length(v1));
+    else return abs(cross(v1, v2) / length(v1));
 }
 
 // returns the shortest distance from segment p to segment q
@@ -3223,79 +3188,7 @@ int dis(int u, int v) {
 \end{lstlisting}
 \subsection{Min Cost Max Flow}
 \begin{lstlisting}
-mt19937 rnd(chrono::steady_clock::now().time_since_epoch().count());
-struct edge {
-  int v, rev;
-  ll cap, cost, flow;
-  edge() {}
-  edge(int v, int rev, ll cap, ll cost) : v(v), rev(rev), cap(cap), cost(cost), flow(0) {}
-};
-struct mcmf {
-  int src, sink, nodes;
-  vector<int> par, idx, Q;
-  vector<bool> inq;
-  vector<ll> dis;
-  vector<vector<edge>> g;
-  mcmf() {}
-  mcmf(int src, int sink, int nodes) : src(src), sink(sink), nodes(nodes),
-    par(nodes), idx(nodes), inq(nodes),
-    dis(nodes), g(nodes), Q(10000005) {} // use Q(nodes) if not using random
-  void add_edge(int u, int v, ll cap, ll cost, bool directed = true) {
-    edge _u = edge(v, g[v].size(), cap, cost);
-    edge _v = edge(u, g[u].size(), 0, -cost);
-    g[u].pb(_u);
-    g[v].pb(_v);
-    if (!directed) add_edge(v, u, cap, cost, true);
-  }
-  bool spfa() {
-    for (int i = 0; i < nodes; i++) {
-      dis[i] = inf, inq[i] = false;
-    }
-    int f = 0, l = 0;
-    dis[src] = 0, par[src] = -1, Q[l++] = src, inq[src] = true;
-    while (f < l) {
-      int u = Q[f++];
-      for (int i = 0; i < g[u].size(); i++) {
-        edge &e = g[u][i];
-        if (e.cap <= e.flow) continue;
-        if (dis[e.v] > dis[u] + e.cost) {
-          dis[e.v] = dis[u] + e.cost;
-          par[e.v] = u, idx[e.v] = i;
-          if(!inq[e.v]) inq[e.v] = true, Q[l++] = e.v;
-          // if (!inq[e.v]) {
-          //   inq[e.v] = true;
-          //   if (f && rnd() & 7) Q[--f] = e.v;
-          //   else Q[l++] = e.v;
-          // }
-        }
-      }
-      inq[u] = false;
-    }
-    return (dis[sink] != inf);
-  }
-  pair<ll, ll> solve() {
-    ll mincost = 0, maxflow = 0;
-    while (spfa()) {
-      ll bottleneck = inf;
-      for (int u = par[sink], v = idx[sink]; u != -1; v = idx[u], u = par[u]) {
-        edge &e = g[u][v];
-        bottleneck = min(bottleneck, e.cap - e.flow);
-      }
-      for (int u = par[sink], v = idx[sink]; u != -1; v = idx[u], u = par[u]) {
-        edge &e = g[u][v];
-        e.flow += bottleneck;
-        g[e.v][e.rev].flow -= bottleneck;
-      }
-      mincost += bottleneck * dis[sink], maxflow += bottleneck;
-    }
-    return make_pair(mincost, maxflow);
-  }
-}; 
-// want to minimize cost and don't care about flow
-// add edge from sink to dummy sink (cap = inf, cost = 0)
-// add edge from source to sink (cap = inf, cost = 0)
-// run mcmf, cost returned is the minimum cost
-\end{lstlisting}
+\\end{lstlisting}
 \subsection{Tree Isomorphism}
 \begin{lstlisting}
 mp["01"] = 1;
@@ -3809,31 +3702,31 @@ else printf("Case %d: lose\n",tc);
 \begin{lstlisting}
 const int maxn = 1e7;
 vector <int> primes;
-int spf[maxn+5], phi[maxn+5], NOD[maxn+5], cnt[maxn+5], POW[maxn+5], SOD[maxn+5]; 
-bool prime[maxn+5];
+int spf[maxn + 5], phi[maxn + 5], NOD[maxn + 5], cnt[maxn + 5], POW[maxn + 5], SOD[maxn + 5];
+bool prime[maxn + 5];
 
-void sieve(){
-    fill(prime+2, prime+maxn+1, 1);
+void sieve() {
+    fill(prime + 2, prime + maxn + 1, 1);
     SOD[1] = NOD[1] = phi[1] = spf[1] = 1;
-    for(ll i=2;i<=maxn;i++){
-        if(prime[i]) {
+    for (ll i = 2; i <= maxn; i++) {
+        if (prime[i]) {
             primes.push_back(i), spf[i] = i;
-            phi[i] = i-1;
+            phi[i] = i - 1;
             NOD[i] = 2, cnt[i] = 1;
-            SOD[i] = i+1, POW[i] = i;
+            SOD[i] = i + 1, POW[i] = i;
         }
-        for(auto p:primes){
-            if(p*i>maxn or p > spf[i]) break;
-            prime[p*i] = false, spf[p*i] = p;
-            if(i%p == 0){
-                phi[p*i]=p*phi[i];
-                NOD[p*i]=NOD[i]/(cnt[i]+1)*(cnt[i]+2), cnt[p*i]=cnt[i]+1;
-                SOD[p*i]=SOD[i]/SOD[POW[i]]*(SOD[POW[i]]+p*POW[i]),POW[p*i]=p*POW[i];
+        for (auto p : primes) {
+            if (p * i > maxn or p > spf[i]) break;
+            prime[p * i] = false, spf[p * i] = p;
+            if (i % p == 0) {
+                phi[p * i] = p * phi[i];
+                NOD[p * i] = NOD[i] / (cnt[i] + 1) * (cnt[i] + 2), cnt[p * i] = cnt[i] + 1;
+                SOD[p * i] = SOD[i] / SOD[POW[i]] * (SOD[POW[i]] + p * POW[i]), POW[p * i] = p * POW[i];
                 break;
             } else {
-                phi[p*i]=phi[p]*phi[i];
-                NOD[p*i]=NOD[p]*NOD[i], cnt[p*i]=1;
-                SOD[p*i]=SOD[p]*SOD[i], POW[p*i]=p;
+                phi[p * i] = phi[p] * phi[i];
+                NOD[p * i] = NOD[p] * NOD[i], cnt[p * i] = 1;
+                SOD[p * i] = SOD[p] * SOD[i], POW[p * i] = p;
             }
 
         }
@@ -3892,17 +3785,18 @@ matrix mat_exp(matrix &mat, ll p) {
 }\end{lstlisting}
 \subsection{Mobius Function}
 \begin{lstlisting}
-const int N=1000001;
-int mu[N];
-void mobius(){
-    MEM(mu,-1);
-    mu[1]=1;
-    for(int i = 2; i<N; i++){
-        if(mu[i]){
-            for(int j = i+i; j<N; j += i) mu[j] -= mu[i];
-        }
+const int N = 1e6 + 5;
+int mob[N];
+
+void mobius() {
+    memset(mob, -1, sizeof mob);
+    mob[1] = 1;
+    for (int i = 2; i < N; i++) if (mob[i]){
+        for (int j = i + i; j < N; j += i) 
+            mob[j] -= mob[i];
     }
 }
+
 \end{lstlisting}
 \subsection{Modular Binomial Coefficients}
 \begin{lstlisting}
@@ -3926,85 +3820,85 @@ int C(int n,int r){
 \subsection{Number Theoretic Transformation}
 \begin{lstlisting}
 #define pii     pair<LL,LL>
-const LL N= 1<<18;
-const LL MOD=786433;
+const LL N = 1 << 18;
+const LL MOD = 786433;
 
 vector<LL>P[N];
 
-LL rev[N],w[N|1],a[N],b[N],inv_n,g;
+LL rev[N], w[N | 1], a[N], b[N], inv_n, g;
 
-LL Pow(LL b,LL p){
-    LL ret=1;
-    while(p){
-        if(p & 1) ret=(ret*b)%MOD;
-        b=(b*b)%MOD;
-        p>>=1;
+LL Pow(LL b, LL p) {
+    LL ret = 1;
+    while (p) {
+        if (p & 1) ret = (ret * b) % MOD;
+        b = (b * b) % MOD;
+        p >>= 1;
     }
     return ret;
 }
 
-LL primitive_root(LL p){
+LL primitive_root(LL p) {
     vector<LL>factor;
-    LL phi = p-1,n=phi;
+    LL phi = p - 1, n = phi;
 
-    for(LL i=2;i*i<=n;i++){
-        if(n%i) continue;
+    for (LL i = 2; i * i <= n; i++) {
+        if (n % i) continue;
         factor.emplace_back(i);
-        while(n%i==0) n/=i;
+        while (n % i == 0) n /= i;
     }
 
-    if(n>1) factor.emplace_back(n);
-    for(LL res=2;res<=p;res++){
-        bool ok=true;
-        for(LL i=0;i<factor.size() && ok;i++) ok &= Pow(res,phi/factor[i]) != 1;
-        if(ok) return res;
+    if (n > 1) factor.emplace_back(n);
+    for (LL res = 2; res <= p; res++) {
+        bool ok = true;
+        for (LL i = 0; i < factor.size() && ok; i++) ok &= Pow(res, phi / factor[i]) != 1;
+        if (ok) return res;
     }
     return -1;
 }
 
-void prepare(LL n){
-    LL sz=abs(31-__builtin_clz(n));
-    LL r=Pow(g,(MOD-1)/n);
-    inv_n=Pow(n,MOD-2);
-    w[0]=w[n]=1;
-    for(LL i=1;i<n;i++) w[i]= (w[i-1]*r)%MOD;
-    for(LL i=1;i<n;i++) rev[i]=(rev[i>>1]>>1) | ((i & 1)<<(sz-1));
+void prepare(LL n) {
+    LL sz = abs(31 - __builtin_clz(n));
+    LL r = Pow(g, (MOD - 1) / n);
+    inv_n = Pow(n, MOD - 2);
+    w[0] = w[n] = 1;
+    for (LL i = 1; i < n; i++) w[i] = (w[i - 1] * r) % MOD;
+    for (LL i = 1; i < n; i++) rev[i] = (rev[i >> 1] >> 1) | ((i & 1) << (sz - 1));
 }
 
-void NTT(LL *a,LL n,LL dir=0){
-    for(LL i=1;i<n-1;i++) if(i<rev[i]) swap(a[i],a[rev[i]]);
-    for(LL m=2;m<=n;m <<= 1) {
-        for(LL i=0;i<n;i+=m){
-            for(LL j=0;j< (m>>1);j++){
-                LL &u=a[i+j],&v=a[i+j+(m>>1)];
-                LL t=v*w[dir ? n-n/m*j:n/m*j]%MOD;
-                v=u-t<0?u-t+MOD:u-t;
-                u=u+t>=MOD?u+t-MOD:u+t;
+void NTT(LL *a, LL n, LL dir = 0) {
+    for (LL i = 1; i < n - 1; i++) if (i < rev[i]) swap(a[i], a[rev[i]]);
+    for (LL m = 2; m <= n; m <<= 1) {
+        for (LL i = 0; i < n; i += m) {
+            for (LL j = 0; j < (m >> 1); j++) {
+                LL &u = a[i + j], &v = a[i + j + (m >> 1)];
+                LL t = v * w[dir ? n - n / m*j : n / m * j] % MOD;
+                v = u - t < 0 ? u - t + MOD : u - t;
+                u = u + t >= MOD ? u + t - MOD : u + t;
             }
         }
     }
-    if(dir) for(LL i=0;i<n;i++) a[i]=(inv_n*a[i])%MOD;
+    if (dir) for (LL i = 0; i < n; i++) a[i] = (inv_n * a[i]) % MOD;
 }
 
-vector<LL> mul(vector<LL>p,vector<LL>q){
-    LL n=p.size(),m=q.size();
-    LL t=n+m-1,sz=1;
-    while(sz<t) sz <<= 1;
+vector<LL> mul(vector<LL>p, vector<LL>q) {
+    LL n = p.size(), m = q.size();
+    LL t = n + m - 1, sz = 1;
+    while (sz < t) sz <<= 1;
     prepare(sz);
 
-    for(LL i=0;i<n;i++) a[i]=p[i];
-    for(LL i=0;i<m;i++) b[i]=q[i];
+    for (LL i = 0; i < n; i++) a[i] = p[i];
+    for (LL i = 0; i < m; i++) b[i] = q[i];
 
-    for(LL i=n;i<sz;i++) a[i]=0;
-    for(LL i=m;i<sz;i++) b[i]=0;
+    for (LL i = n; i < sz; i++) a[i] = 0;
+    for (LL i = m; i < sz; i++) b[i] = 0;
 
-    NTT(a,sz);
-    NTT(b,sz);
-    for(LL i=0;i<sz;i++) a[i]=(a[i]*b[i])%MOD;
-    NTT(a,sz,1);
+    NTT(a, sz);
+    NTT(b, sz);
+    for (LL i = 0; i < sz; i++) a[i] = (a[i] * b[i]) % MOD;
+    NTT(a, sz, 1);
 
-    vector<LL> c(a,a+sz);
-    while(c.size() && c.back()==0) c.pop_back();
+    vector<LL> c(a, a + sz);
+    while (c.size() && c.back() == 0) c.pop_back();
     return c;
 }
 
@@ -4013,33 +3907,33 @@ N different number box
 Number of ways to make a number by picking any number from any of the boxes
 */
 
-vector<LL> solve(LL l,LL r){
-    if(l==r) return P[l];
-    LL m=(l+r)/2;
-    return mul(solve(l,m),solve(m+1,r));
+vector<LL> solve(LL l, LL r) {
+    if (l == r) return P[l];
+    LL m = (l + r) / 2;
+    return mul(solve(l, m), solve(m + 1, r));
 }
 
-int main(){
+int main() {
     LL m;
     cin >> m;
-    for(LL i=1;i<=m;i++){
+    for (LL i = 1; i <= m; i++) {
         LL num;
         cin >> num;
         vector<pii>v;
-        LL mx=0;
-        while(num--){
-            LL typ,cnt;
+        LL mx = 0;
+        while (num--) {
+            LL typ, cnt;
             cin >> typ >> cnt;
-            v.emplace_back(typ,cnt);
-            mx=max(mx,typ);
+            v.emplace_back(typ, cnt);
+            mx = max(mx, typ);
         }
-        P[i].resize(mx+1);
-        for(pii p:v) P[i][p.first]=p.second;
+        P[i].resize(mx + 1);
+        for (pii p : v) P[i][p.first] = p.second;
     }
-    g=primitive_root(MOD);
-    vector<LL>c=solve(1,m);
-    for(LL i=0;i<c.size();i++){
-        if(c[i]){
+    g = primitive_root(MOD);
+    vector<LL>c = solve(1, m);
+    for (LL i = 0; i < c.size(); i++) {
+        if (c[i]) {
             cout << i << ' ' << c[i] << '\n';
         }
     }
@@ -5008,25 +4902,25 @@ int main() {
 \subsection{Z Algorithm}
 \begin{lstlisting}
 vector<int> calcz(string s) {
-  int n = s.size();
-  vector<int> z(n);
-  int l, r; l = r = 0;
-  for (int i = 1; i < n; i++) {
-    if (i > r) {
-      l = r = i;
-      while (r < n && s[r] == s[r - l]) r++;
-      z[i] = r - l; r--;
-    } else {
-      int k = i - l;
-      if (z[k] < r - i + 1) z[i] = z[k];
-      else {
-        l = i;
-        while (r < n && s[r] == s[r - l]) r++;
-        z[i] = r - l; r--;
-      }
+    int n = s.size();
+    vector<int> z(n);
+    int l, r; l = r = 0;
+    for (int i = 1; i < n; i++) {
+        if (i > r) {
+            l = r = i;
+            while (r < n && s[r] == s[r - l]) r++;
+            z[i] = r - l; r--;
+        } else {
+            int k = i - l;
+            if (z[k] < r - i + 1) z[i] = z[k];
+            else {
+                l = i;
+                while (r < n && s[r] == s[r - l]) r++;
+                z[i] = r - l; r--;
+            }
+        }
     }
-  }
-  return z;
+    return z;
 }
 \end{lstlisting}
 \section{Tricks}

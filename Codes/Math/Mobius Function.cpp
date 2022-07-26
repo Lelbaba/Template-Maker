@@ -1,11 +1,12 @@
-const int N=1000001;
-int mu[N];
-void mobius(){
-    MEM(mu,-1);
-    mu[1]=1;
-    for(int i = 2; i<N; i++){
-        if(mu[i]){
-            for(int j = i+i; j<N; j += i) mu[j] -= mu[i];
-        }
+const int N = 1e6 + 5;
+int mob[N];
+
+void mobius() {
+    memset(mob, -1, sizeof mob);
+    mob[1] = 1;
+    for (int i = 2; i < N; i++) if (mob[i]){
+        for (int j = i + i; j < N; j += i) 
+            mob[j] -= mob[i];
     }
 }
+

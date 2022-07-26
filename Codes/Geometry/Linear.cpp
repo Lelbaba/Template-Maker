@@ -50,8 +50,7 @@ Tf distancePointSegment(Point p, Segment s) {
         return length(v2);
     else if (dcmp(dot(v1, v3)) > 0)
         return length(v3);
-    else
-        return abs(cross(v1, v2) / length(v1));
+    else return abs(cross(v1, v2) / length(v1));
 }
 
 // returns the shortest distance from segment p to segment q
